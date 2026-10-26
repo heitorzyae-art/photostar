@@ -77,21 +77,21 @@ impl Host {
 }
 
 struct Desktop {
-    h: Harness<'static, PhotocraftApp>,
+    h: Harness<'static, PhotostarApp>,
     host: Rc<RefCell<Host>>,
 }
 
 impl Desktop {
-    fn new(app: PhotocraftApp) -> Self {
+    fn new(app: PhotostarApp) -> Self {
         let size = vec2(1400.0, 900.0);
         let host = Rc::new(RefCell::new(Host { size, ..Default::default() }));
         let shared = host.clone();
         egui::Context::set_immediate_viewport_renderer(move |ctx, viewport| Host::render(&shared, ctx, viewport));
         let mut ready = false;
         let h = Harness::builder().with_size(size).with_step_dt(1.0 / 60.0).build_ui_state(
-            move |ui, app: &mut PhotocraftApp| {
+            move |ui, app: &mut PhotostarApp| {
                 if !ready {
-                    PhotocraftApp::setup_context(ui.ctx(), app.ui.theme);
+                    PhotostarApp::setup_context(ui.ctx(), app.ui.theme);
                     ui.ctx().set_embed_viewports(false);
                     ready = true;
                     return;
@@ -163,12 +163,12 @@ impl Desktop {
     }
 }
 
-fn lay(app: &PhotocraftApp) -> &Layout<String> {
+fn lay(app: &PhotostarApp) -> &Layout<String> {
     &app.ui.docking.as_ref().expect("a customized workspace").layout
 }
 
-fn app_with_document() -> PhotocraftApp {
-    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+fn app_with_document() -> PhotostarApp {
+    let mut app = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
     app.run("file.new", json!({"width": 64, "height": 48})).unwrap();
     app
 }
@@ -200,7 +200,7 @@ fn undocking_a_panel_opens_its_own_window_and_the_studio_card_stays_in_the_main_
     desktop.steps(3);
     assert!(desktop.window_of("history").is_some(), "History has its own window");
 
-    let mut studio = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+    let mut studio = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
     studio.ui.theme = crate::theme::ThemeKind::Studio;
     studio.run("file.new", json!({"width": 64, "height": 48})).unwrap();
     let mut desktop = Desktop::new(studio);
@@ -213,7 +213,7 @@ fn undocking_a_panel_opens_its_own_window_and_the_studio_card_stays_in_the_main_
     assert!(refused.is_err(), "{refused:?}");
 }
 
-fn studio_app() -> PhotocraftApp {
+fn studio_app() -> PhotostarApp {
     let mut app = app_with_document();
     app.ui.theme = crate::theme::ThemeKind::Studio;
     app
@@ -241,7 +241,7 @@ fn the_studio_card_stays_in_the_main_window_after_a_reload() {
 }
 
 #[test]
-fn keys_pressed_in_a_panel_window_run_photocrafts_shortcuts() {
+fn keys_pressed_in_a_panel_window_run_photostars_shortcuts() {
     let mut desktop = Desktop::new(app_with_document());
     desktop.h.state_mut().run("window.panel.float", json!({"panel": "info"})).unwrap();
     desktop.steps(3);
@@ -331,9 +331,9 @@ fn keys_held_in_a_panel_window_count_as_released_once_it_loses_the_keyboard() {
 
 #[test]
 fn a_dialog_blocks_the_panel_windows() {
-    let about = |app: &mut PhotocraftApp| _ = app.ui.open_dialog(crate::state::DialogKind::About, Default::default());
-    let blur = |app: &mut PhotocraftApp| _ = crate::dialogs::open_command_dialog(app, "filter.blur.gaussianBlur", "Gaussian Blur");
-    for (name, open) in [("About", &about as &dyn Fn(&mut PhotocraftApp)), ("Gaussian Blur", &blur)] {
+    let about = |app: &mut PhotostarApp| _ = app.ui.open_dialog(crate::state::DialogKind::About, Default::default());
+    let blur = |app: &mut PhotostarApp| _ = crate::dialogs::open_command_dialog(app, "filter.blur.gaussianBlur", "Gaussian Blur");
+    for (name, open) in [("About", &about as &dyn Fn(&mut PhotostarApp)), ("Gaussian Blur", &blur)] {
         let mut desktop = Desktop::new(app_with_document());
         desktop.h.state_mut().run("window.panel.float", json!({"panel": "info"})).unwrap();
         desktop.steps(3);
@@ -375,12 +375,12 @@ impl egui::DroppedFile for Dropped {
 
 #[test]
 fn a_file_dropped_on_a_panel_window_opens_as_a_document() {
-    // An importer that names the document after the file, as photocraft-io does.
-    let import = |name: &str, _: &[u8], _: &photocraft_io::ImportOptions| {
-        let size = photocraft_geom::Size::new(4, 4);
-        Ok((photocraft_doc::Document::new(name, size, photocraft_color::ColorMode::Rgb, photocraft_color::SampleType::U8), Vec::new()))
+    // An importer that names the document after the file, as photostar-io does.
+    let import = |name: &str, _: &[u8], _: &photostar_io::ImportOptions| {
+        let size = photostar_geom::Size::new(4, 4);
+        Ok((photostar_doc::Document::new(name, size, photostar_color::ColorMode::Rgb, photostar_color::SampleType::U8), Vec::new()))
     };
-    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services { import: Some(Box::new(import)), ..Default::default() });
+    let mut app = PhotostarApp::new(photostar_engine::Session::new(), crate::Services { import: Some(Box::new(import)), ..Default::default() });
     app.run("file.new", json!({"width": 64, "height": 48})).unwrap();
     let mut desktop = Desktop::new(app);
     desktop.h.state_mut().run("window.panel.float", json!({"panel": "info"})).unwrap();

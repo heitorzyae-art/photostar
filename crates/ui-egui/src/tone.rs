@@ -7,10 +7,10 @@
 use std::sync::Arc;
 
 use egui::{Color32, Rect};
-use photocraft_doc::adjust::ToneSpace;
-use photocraft_doc::{Document, Layer, LayerId};
+use photostar_doc::adjust::ToneSpace;
+use photostar_doc::{Document, Layer, LayerId};
 
-use crate::PhotocraftApp;
+use crate::PhotostarApp;
 use crate::theme::Tokens;
 
 static EMPTY: [u32; 256] = [0; 256];
@@ -52,7 +52,7 @@ pub enum HistSource {
     Layer(LayerId),
     /// The gray plane a Curves target edits: a layer mask, a saved channel or the Quick Mask.
     /// The dialog shows this plane's own levels, not the colour layers beneath (#5335).
-    Channel { layer: LayerId, surface: photocraft_engine::channel_cmds::GraySurface },
+    Channel { layer: LayerId, surface: photostar_engine::channel_cmds::GraySurface },
     /// A layer and everything beneath it, the layers above hidden (the Histogram panel's
     /// Adjustment Composite: what an adjustment layer outputs).
     UpTo(LayerId),
@@ -69,10 +69,10 @@ pub(crate) fn tag(source: HistSource, space: ToneSpace) -> u64 {
         HistSource::BelowLayer(l) => (1u64, l.0),
         HistSource::Layer(l) => (2, l.0),
         HistSource::Channel { layer, surface } => match surface {
-            photocraft_engine::channel_cmds::GraySurface::LayerMask => (3, layer.0),
-            photocraft_engine::channel_cmds::GraySurface::Alpha(i) => (4, i as u64),
-            photocraft_engine::channel_cmds::GraySurface::QuickMask => (5, layer.0),
-            photocraft_engine::channel_cmds::GraySurface::FilterMask => (6, layer.0),
+            photostar_engine::channel_cmds::GraySurface::LayerMask => (3, layer.0),
+            photostar_engine::channel_cmds::GraySurface::Alpha(i) => (4, i as u64),
+            photostar_engine::channel_cmds::GraySurface::QuickMask => (5, layer.0),
+            photostar_engine::channel_cmds::GraySurface::FilterMask => (6, layer.0),
         },
         HistSource::UpTo(l) => (7, l.0),
     };
@@ -133,11 +133,11 @@ pub fn compute_histograms_at(doc: &Document, source: HistSource, space: ToneSpac
         // colour mode (#5335).
         HistSource::Channel { layer, surface } => {
             let surf = match surface {
-                photocraft_engine::channel_cmds::GraySurface::LayerMask => doc.layer(layer).and_then(|l| l.mask.as_ref()).map(|m| &m.surface),
-                photocraft_engine::channel_cmds::GraySurface::Alpha(i) => doc.channels.get(i).map(|c| &c.surface),
-                photocraft_engine::channel_cmds::GraySurface::QuickMask => doc.quick_mask.as_ref().map(|c| &c.surface),
-                photocraft_engine::channel_cmds::GraySurface::FilterMask => {
-                    doc.layer(layer).and_then(|l| photocraft_engine::mask_view_cmds::viewed_mask(l, true)).map(|m| &m.surface)
+                photostar_engine::channel_cmds::GraySurface::LayerMask => doc.layer(layer).and_then(|l| l.mask.as_ref()).map(|m| &m.surface),
+                photostar_engine::channel_cmds::GraySurface::Alpha(i) => doc.channels.get(i).map(|c| &c.surface),
+                photostar_engine::channel_cmds::GraySurface::QuickMask => doc.quick_mask.as_ref().map(|c| &c.surface),
+                photostar_engine::channel_cmds::GraySurface::FilterMask => {
+                    doc.layer(layer).and_then(|l| photostar_engine::mask_view_cmds::viewed_mask(l, true)).map(|m| &m.surface)
                 }
             };
             if let Some(s) = surf
@@ -161,7 +161,7 @@ pub fn compute_histograms_at(doc: &Document, source: HistSource, space: ToneSpac
 /// The largest document counted pixel by pixel at the automatic cache level. The web build counts
 /// on the UI thread (it has no worker threads), so it reduces documents a quarter that size.
 fn exact_limit() -> u64 {
-    if cfg!(target_arch = "wasm32") { photocraft_compose::PROXY_THUMBNAIL_PIXELS / 4 } else { photocraft_compose::PROXY_THUMBNAIL_PIXELS }
+    if cfg!(target_arch = "wasm32") { photostar_compose::PROXY_THUMBNAIL_PIXELS / 4 } else { photostar_compose::PROXY_THUMBNAIL_PIXELS }
 }
 
 /// The cache level a histogram of `doc` is counted at: 1 (every pixel) up to the size a proxy
@@ -170,7 +170,7 @@ fn exact_limit() -> u64 {
 pub fn cache_level(doc: &Document, max_level: u32) -> u32 {
     let longest = doc.size.width.max(doc.size.height);
     let k = longest / 768;
-    let auto = if k >= 2 && doc.size.area() > exact_limit() && photocraft_compose::proxy::proxy_faithful(doc) { k.next_power_of_two().ilog2() + 1 } else { 1 };
+    let auto = if k >= 2 && doc.size.area() > exact_limit() && photostar_compose::proxy::proxy_faithful(doc) { k.next_power_of_two().ilog2() + 1 } else { 1 };
     auto.min(max_level.clamp(1, MAX_CACHE_LEVEL))
 }
 
@@ -188,7 +188,7 @@ fn proxy_factor(doc: &Document, level: u32) -> u32 {
 ///
 /// The pixels are counted as they are, never blended: an area-averaged thumbnail invented greys
 /// that aren't in the image wherever an edge fell inside one of its cells (#6538). Documents up to
-/// [`photocraft_compose::PROXY_THUMBNAIL_PIXELS`] (and those a proxy can't reduce faithfully) are
+/// [`photostar_compose::PROXY_THUMBNAIL_PIXELS`] (and those a proxy can't reduce faithfully) are
 /// composited in bands and counted exactly, which costs what the thumbnail did (it reduced the
 /// same full composite). Larger ones count a nearest-neighbour proxy composite of about the old
 /// thumbnail's work: it only holds values the layers have.
@@ -209,8 +209,8 @@ fn composite_bins(doc: &Document, source: HistSource, space: ToneSpace, max_leve
         HistSource::Channel { .. } => {}
     }
     let level = cache_level(&d, max_level);
-    let d = if level > 1 { photocraft_compose::proxy::proxy_document(&d, proxy_factor(&d, level)) } else { d };
-    let _ = photocraft_compose::render_bands(&d, d.bounds(), 0, |band| -> Result<(), ()> {
+    let d = if level > 1 { photostar_compose::proxy::proxy_document(&d, proxy_factor(&d, level)) } else { d };
+    let _ = photostar_compose::render_bands(&d, d.bounds(), 0, |band| -> Result<(), ()> {
         #[cfg(not(target_arch = "wasm32"))]
         let part = {
             use rayon::prelude::*;
@@ -283,14 +283,14 @@ fn count_pixels(px: &[[f32; 4]], space: ToneSpace, h: &mut [[u32; 256]]) {
                 add(0, (q[0] + q[1] + q[2]) / 3);
             }
             ToneSpace::Cmyk => {
-                let ink = photocraft_color::convert::rgb_to_cmyk([p[0], p[1], p[2]].map(|v| v.clamp(0.0, 1.0)));
+                let ink = photostar_color::convert::rgb_to_cmyk([p[0], p[1], p[2]].map(|v| v.clamp(0.0, 1.0)));
                 for (c, v) in ink.iter().enumerate() {
                     add(c + 1, bin(1.0 - v));
                 }
                 add(0, bin(1.0 - ink.iter().sum::<f32>() / 4.0));
             }
             ToneSpace::Lab => {
-                let l = photocraft_color::convert::srgb_to_lab([p[0], p[1], p[2]].map(|v| v.clamp(0.0, 1.0)));
+                let l = photostar_color::convert::srgb_to_lab([p[0], p[1], p[2]].map(|v| v.clamp(0.0, 1.0)));
                 add(0, bin(l[0] / 100.0));
                 add(1, bin((l[1] + 128.0) / 255.0));
                 add(2, bin((l[2] + 128.0) / 255.0));
@@ -301,7 +301,7 @@ fn count_pixels(px: &[[f32; 4]], space: ToneSpace, h: &mut [[u32; 256]]) {
 
 /// 256-bin histogram of a gray plane: its levels in 0–255, sampled like the engine's auto-tone
 /// histograms so a big canvas costs no more than about a megapixel here (#5335).
-fn gray_bins(surf: &photocraft_raster::Surface, area: photocraft_geom::Rect) -> [u32; 256] {
+fn gray_bins(surf: &photostar_raster::Surface, area: photostar_geom::Rect) -> [u32; 256] {
     let mut h = [0u32; 256];
     let step = ((u64::from(area.width()) * u64::from(area.height())) / 1_000_000).max(1).isqrt().max(1) as i32;
     let mut y = area.y0;
@@ -321,7 +321,7 @@ fn gray_bins(surf: &photocraft_raster::Surface, area: photocraft_geom::Rect) -> 
 
 /// Cached histograms for a tone editor; recomputed only when something other than the editor's
 /// own commits changed the document (see [`keep_after_commit`]).
-pub fn histograms(app: &mut PhotocraftApp, source: HistSource, space: ToneSpace) -> Arc<Histograms> {
+pub fn histograms(app: &mut PhotostarApp, source: HistSource, space: ToneSpace) -> Arc<Histograms> {
     let Some(st) = app.session.active() else { return Arc::new(Histograms::default()) };
     let (doc_id, rev) = (st.doc.id, st.revision);
     let want = tag(source, space);
@@ -348,13 +348,13 @@ pub fn histograms(app: &mut PhotocraftApp, source: HistSource, space: ToneSpace)
 
 /// Whether the latest revision changed no pixels (selecting a layer, say): cached histograms of
 /// the previous revision still hold (#125).
-pub(crate) fn view_only(st: &photocraft_engine::DocState) -> bool {
+pub(crate) fn view_only(st: &photostar_engine::DocState) -> bool {
     st.last_damage.is_some_and(|r| r.is_empty())
 }
 
 /// After an editor commits its own adjustment layer, the image below it is unchanged: keep the
 /// cached histogram valid for the new revision. Call with the revision seen before the commit.
-pub fn keep_after_commit(app: &mut PhotocraftApp, layer: LayerId, before: Option<u64>) {
+pub fn keep_after_commit(app: &mut PhotostarApp, layer: LayerId, before: Option<u64>) {
     let now = app.session.active().map(|s| s.revision);
     if let (Some((_, l, r, _)), Some(before), Some(now)) = (app.tone_hist.as_mut(), before, now)
         && *l == layer
@@ -418,7 +418,7 @@ mod tests {
 
     #[test]
     fn histogram_ignores_the_edited_adjustment() {
-        let mut s = photocraft_engine::Session::new();
+        let mut s = photostar_engine::Session::new();
         s.execute("file.new", json!({"width": 64, "height": 64})).unwrap(); // white
         s.execute("layer.newAdjustmentLayer.invert", json!({})).unwrap();
         let st = s.active().unwrap();
@@ -429,7 +429,7 @@ mod tests {
 
     #[test]
     fn layer_histogram_sees_only_that_layer_and_spaces_have_their_channels() {
-        let mut s = photocraft_engine::Session::new();
+        let mut s = photostar_engine::Session::new();
         s.execute("file.new", json!({"width": 32, "height": 32})).unwrap(); // white background
         let bg = s.active().unwrap().doc.layers[0].id;
         s.execute("layer.new.layer", json!({})).unwrap();
@@ -447,15 +447,15 @@ mod tests {
     /// spike at 25% grey, not at black.
     #[test]
     fn channel_histogram_describes_the_gray_plane() {
-        use photocraft_engine::channel_cmds::GraySurface;
-        let mut s = photocraft_engine::Session::new();
+        use photostar_engine::channel_cmds::GraySurface;
+        let mut s = photostar_engine::Session::new();
         s.execute("file.new", json!({"width": 32, "height": 32})).unwrap(); // white background
         s.execute("layer.new.layer", json!({})).unwrap();
         s.execute("select.rect", json!({"x": 0, "y": 0, "width": 32, "height": 32})).unwrap();
         s.execute("edit.fill", json!({"color": "#000000"})).unwrap();
         s.execute("channel.new", json!({"name": "Sky sel", "fill": "white"})).unwrap();
         s.execute("layer.layerMask.revealAll", json!({})).unwrap();
-        let b = photocraft_geom::Rect::from_xywh(0, 0, 32, 32);
+        let b = photostar_geom::Rect::from_xywh(0, 0, 32, 32);
         s.edit("fill-planes", |doc, active| {
             doc.channels[0].surface.fill_rect(b, &[0.25]);
             doc.layer_mut(active.unwrap()).unwrap().mask.as_mut().unwrap().surface.fill_rect(b, &[0.0]);
@@ -521,8 +521,8 @@ mod tests {
     }
 
     /// A white document with black filled over columns `0..split` (a layer above the background).
-    fn split_doc(w: u32, h: u32, split: u32, depth: Option<u32>) -> photocraft_engine::Session {
-        let mut s = photocraft_engine::Session::new();
+    fn split_doc(w: u32, h: u32, split: u32, depth: Option<u32>) -> photostar_engine::Session {
+        let mut s = photostar_engine::Session::new();
         let mut p = json!({"width": w, "height": h});
         if let Some(bits) = depth {
             p["depth"] = json!(bits);
@@ -535,7 +535,7 @@ mod tests {
         s
     }
 
-    fn panel_histograms(s: &photocraft_engine::Session) -> Histograms {
+    fn panel_histograms(s: &photostar_engine::Session) -> Histograms {
         compute_histograms(&s.active().unwrap().doc, HistSource::BelowLayer(LayerId(u64::MAX)), ToneSpace::Rgb)
     }
 

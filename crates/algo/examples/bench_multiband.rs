@@ -1,13 +1,13 @@
 //! Time and peak memory of Photomerge's multi-band blend on overlapping RGB sources.
-//! Backwards compatible: `cargo run --release -p photocraft-algo --example bench_multiband [n] [mp]`.
+//! Backwards compatible: `cargo run --release -p photostar-algo --example bench_multiband [n] [mp]`.
 //! `cargo xtask perf --bench bench_multiband --quick` also collects repeatable JSON timings.
 //! The peak is the entire process's resident-set high-water mark, not an estimate of allocations
-//! by the blend alone (`photocraft_testkit::perf`: the kernel's mark on Linux, sampled elsewhere).
+//! by the blend alone (`photostar_testkit::perf`: the kernel's mark on Linux, sampled elsewhere).
 use std::path::PathBuf;
 use std::time::Instant;
 
-use photocraft_algo::panorama::{self, RoiImage};
-use photocraft_testkit::perf::{self, RssSampler, Summary};
+use photostar_algo::panorama::{self, RoiImage};
+use photostar_testkit::perf::{self, RssSampler, Summary};
 use serde_json::json;
 
 const ROW: &str = "Photomerge multiband blend";

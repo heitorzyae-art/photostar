@@ -1,5 +1,5 @@
 use super::*;
-use photocraft_doc::vector::Subpath;
+use photostar_doc::vector::Subpath;
 
 fn session(depth: u32) -> Session {
     let mut s = Session::new();
@@ -222,7 +222,7 @@ fn huge_selection(size: (u32, u32), rects: &[Rect]) -> Session {
     let mut s = blob_session(8);
     let st = s.active_mut().unwrap();
     let doc = std::sync::Arc::make_mut(&mut st.doc);
-    doc.size = photocraft_geom::Size::new(size.0, size.1);
+    doc.size = photostar_geom::Size::new(size.0, size.1);
     let mut sel = Surface::new(PixelFormat::GRAY8);
     for r in rects {
         sel.fill_rect(*r, &[1.0]);

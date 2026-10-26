@@ -7,13 +7,13 @@
 //! inks (`Document::duotone`), which display and flat export render through. Like Photoshop the
 //! conversions flatten (Indexed, Bitmap) and require a grayscale source (Bitmap, Duotone).
 
-use photocraft_algo::quantize::{self, BitmapMethod, Dither, Forced, HalftoneShape, PaletteKind};
-use photocraft_algo::transform::{Homography, Interp};
-use photocraft_color::{ColorMode, PixelFormat, SampleType};
-use photocraft_doc::adjust::CurvePoint;
-use photocraft_doc::{ColorTable, Document, Duotone, DuotoneInk, Layer, LayerContent, LayerId, Size};
-use photocraft_geom::Affine;
-use photocraft_raster::Surface;
+use photostar_algo::quantize::{self, BitmapMethod, Dither, Forced, HalftoneShape, PaletteKind};
+use photostar_algo::transform::{Homography, Interp};
+use photostar_color::{ColorMode, PixelFormat, SampleType};
+use photostar_doc::adjust::CurvePoint;
+use photostar_doc::{ColorTable, Document, Duotone, DuotoneInk, Layer, LayerContent, LayerId, Size};
+use photostar_geom::Affine;
+use photostar_raster::Surface;
 use serde_json::{Value, json};
 
 use crate::commands::CommandSpec;
@@ -109,9 +109,9 @@ pub(crate) fn rotate_arbitrary(s: &mut Session, p: &Value) -> Result<Value> {
             if background && let Some(surf) = l.surface_mut() {
                 // The Background stays a Background: rotated pixels over the background colour.
                 let src = surf.content_bounds();
-                let rotated = photocraft_algo::transform::warp_surface(surf, src, &h, interp)?;
+                let rotated = photostar_algo::transform::warp_surface(surf, src, &h, interp)?;
                 let mut base = Surface::new(fmt);
-                let fill = photocraft_raster::from_rgba(&fmt, bg);
+                let fill = photostar_raster::from_rgba(&fmt, bg);
                 // One shared tile per full tile, not a canvas-sized float buffer.
                 base.fill_rect(canvas, &fill);
                 crate::transform_cmds::composite_over(&mut base, &rotated);
@@ -122,7 +122,7 @@ pub(crate) fn rotate_arbitrary(s: &mut Session, p: &Value) -> Result<Value> {
                 }
             } else {
                 // Rotating the whole image moves locked layers too, including inside groups.
-                with_released_movement_locks(l, |l| crate::transform_cmds::transform_layer(None, photocraft_doc::Locks::default(), l, &h, Some(a), interp))?;
+                with_released_movement_locks(l, |l| crate::transform_cmds::transform_layer(None, photostar_doc::Locks::default(), l, &h, Some(a), interp))?;
                 // Free Transform moves only linked masks; the whole image turns them all (#9201).
                 warp_unlinked_masks(l, &h, interp)?;
             }
@@ -185,7 +185,7 @@ fn with_released_movement_locks<R>(l: &mut Layer, f: impl FnOnce(&mut Layer) -> 
 
 /// The flattened image as straight RGBA (over white when `opaque`).
 fn composite(doc: &Document, opaque: bool) -> Vec<[f32; 4]> {
-    let buf = photocraft_compose::flatten(doc);
+    let buf = photostar_compose::flatten(doc);
     if opaque { buf.over_background([1.0, 1.0, 1.0]).px } else { buf.px }
 }
 
@@ -198,7 +198,7 @@ fn single_layer(doc: &mut Document, active: &mut Option<LayerId>, mode: ColorMod
     let mut pixel = vec![0.0; fmt.channels()];
     let mut data = Vec::new();
     for q in px {
-        photocraft_raster::from_rgba_into(&fmt, *q, &mut pixel);
+        photostar_raster::from_rgba_into(&fmt, *q, &mut pixel);
         data.extend_from_slice(&pixel);
     }
     let mut l = Layer::raster(name, fmt);
@@ -379,7 +379,7 @@ fn color_table(s: &mut Session, p: &Value) -> Result<Value> {
             let n = fmt.channels();
             let mut data = surf.read_region(r);
             for q in data.chunks_exact_mut(n) {
-                let c = photocraft_raster::to_rgba(&fmt, q);
+                let c = photostar_raster::to_rgba(&fmt, q);
                 let rgb = [c[0], c[1], c[2]];
                 let i = if c[3] <= 0.0 {
                     let Some(i) = old.transparent.map(usize::from) else { continue };
@@ -399,7 +399,7 @@ fn color_table(s: &mut Session, p: &Value) -> Result<Value> {
                 };
                 let nc = if i < table.colors.len() { table.rgb(i) } else { table.rgb(table.nearest([c[0], c[1], c[2]])) };
                 let mut enc = [0.0f32; 8];
-                let m = photocraft_raster::from_rgba_into(&fmt, [nc[0], nc[1], nc[2], alpha], &mut enc);
+                let m = photostar_raster::from_rgba_into(&fmt, [nc[0], nc[1], nc[2], alpha], &mut enc);
                 q.copy_from_slice(&enc[..m]);
             }
             surf.write_region(r, &data);
@@ -429,11 +429,11 @@ fn custom_pattern_map(s: &Session, cmd: &str, p: &Value) -> Result<(Vec<f32>, us
     let pat = crate::pattern_cmds::resolve_param(s, cmd, p)?;
     // A pattern keeps its own colours: its lightness is what it paints in a Grayscale document,
     // over white where it is transparent.
-    let px = photocraft_compose::pattern::pattern_rgba(&pat, ColorMode::Grayscale);
+    let px = photostar_compose::pattern::pattern_rgba(&pat, ColorMode::Grayscale);
     if px.is_empty() {
         return Err(bad(cmd, format!("the pattern \"{}\" is empty or too large", pat.display_name())));
     }
-    let lightness: Vec<f32> = px.iter().map(|q| photocraft_color::convert::rgb_to_gray([q[0], q[1], q[2]]) * q[3] + (1.0 - q[3])).collect();
+    let lightness: Vec<f32> = px.iter().map(|q| photostar_color::convert::rgb_to_gray([q[0], q[1], q[2]]) * q[3] + (1.0 - q[3])).collect();
     Ok((quantize::custom_pattern_thresholds(&lightness), pat.width as usize, pat.height as usize))
 }
 
@@ -497,15 +497,15 @@ fn bitmap(s: &mut Session, p: &Value) -> Result<Value> {
     if (nw, nh) != (ow, oh) {
         // Color Sampler points scale with the pixels, as in Image Size.
         let (sx, sy) = (f64::from(nw) / f64::from(ow.max(1)), f64::from(nh) / f64::from(oh.max(1)));
-        s.set_sampler_map(photocraft_geom::Affine { m: [sx, 0.0, 0.0, sy, 0.0, 0.0] });
+        s.set_sampler_map(photostar_geom::Affine { m: [sx, 0.0, 0.0, sy, 0.0, 0.0] });
     }
     s.edit("Bitmap", |doc, active| {
         if (nw, nh) != (doc.size.width, doc.size.height) {
-            crate::image_cmds::resample_doc(doc, nw, nh, photocraft_algo::resample::Resample::Bicubic);
+            crate::image_cmds::resample_doc(doc, nw, nh, photostar_algo::resample::Resample::Bicubic);
         }
         doc.resolution_dpi = dpi;
         let px = composite(doc, true);
-        let mut gray: Vec<f32> = px.iter().map(|q| photocraft_color::convert::rgb_to_gray([q[0], q[1], q[2]])).collect();
+        let mut gray: Vec<f32> = px.iter().map(|q| photostar_color::convert::rgb_to_gray([q[0], q[1], q[2]])).collect();
         let w = doc.size.width as usize;
         match &custom {
             Some((map, mw, mh)) => quantize::to_bitmap_custom(&mut gray, w, map, *mw, *mh),

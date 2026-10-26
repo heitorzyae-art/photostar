@@ -1,8 +1,8 @@
 //! Brush-engine tests: tips, spacing, dynamics, masks, smoothing, determinism, formats.
 
-use photocraft_color::{BlendMode, ColorMode, PixelFormat, SampleType};
-use photocraft_geom::{Point, Rect};
-use photocraft_raster::Surface;
+use photostar_color::{BlendMode, ColorMode, PixelFormat, SampleType};
+use photostar_geom::{Point, Rect};
+use photostar_raster::Surface;
 
 use crate::brush::*;
 use crate::dynamics::{Smoother, smooth_points};
@@ -1171,7 +1171,7 @@ fn paints_every_depth_and_model() {
         for sample in [SampleType::U8, SampleType::U16, SampleType::F32] {
             for alpha in [true, false] {
                 let fmt = PixelFormat::new(mode, sample, alpha);
-                let mut s = Surface::with_default(fmt, &photocraft_raster::from_rgba(&fmt, [1.0, 1.0, 1.0, 1.0]));
+                let mut s = Surface::with_default(fmt, &photostar_raster::from_rgba(&fmt, [1.0, 1.0, 1.0, 1.0]));
                 let fancy = BrushSettings {
                     shape_dynamics: ShapeDynamics { enabled: true, size: Dynamic::jitter(0.3), ..Default::default() },
                     color_dynamics: ColorDynamics { enabled: true, brightness_jitter: 0.1, ..Default::default() },
@@ -1182,7 +1182,7 @@ fn paints_every_depth_and_model() {
                     render_stroke(&mut s, br, &line(5.0, 40.0, 5.0), None, false, 1.0);
                 }
                 let c = s.rgba(20, 5);
-                let expect = photocraft_raster::to_rgba(&fmt, &photocraft_raster::from_rgba(&fmt, [1.0, 0.0, 0.0, 1.0]));
+                let expect = photostar_raster::to_rgba(&fmt, &photostar_raster::from_rgba(&fmt, [1.0, 0.0, 0.0, 1.0]));
                 assert!((c[0] - expect[0]).abs() < 0.15 && (c[1] - expect[1]).abs() < 0.12, "{fmt:?} {c:?} vs {expect:?}");
                 assert_eq!(s.pixel(20, 30), s.pixel(5000, 5000), "{fmt:?} untouched");
             }
@@ -1807,8 +1807,8 @@ fn large_tips_render_the_same_in_parallel_and_serially() {
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn a_parallel_composite_converts_through_the_documents_cmyk_profile() {
-    use photocraft_cms::synth::{CmykParams, cmyk_profile};
-    use photocraft_color::convert::{CmykSpace, with_cmyk_space};
+    use photostar_cms::synth::{CmykParams, cmyk_profile};
+    use photostar_color::convert::{CmykSpace, with_cmyk_space};
     let profile =
         cmyk_profile(&CmykParams { description: "Brush Test CMYK".into(), tvi: [0.26, 0.26, 0.26, 0.3], grid_a2b: 5, grid_b2a: 9, ..Default::default() });
     let bytes = profile.to_bytes();

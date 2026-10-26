@@ -4830,7 +4830,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft"
+name = "photostar"
 version = "0.16.0"
 dependencies = [
  "arboard",
@@ -4850,19 +4850,19 @@ dependencies = [
  "objc2-app-kit 0.3.2",
  "objc2-foundation 0.3.2",
  "open",
- "photocraft-automation",
- "photocraft-cms",
- "photocraft-codecs",
- "photocraft-color",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-engine",
- "photocraft-format",
- "photocraft-geom",
- "photocraft-io",
- "photocraft-raster",
- "photocraft-tablet",
- "photocraft-ui-egui",
+ "photostar-automation",
+ "photostar-cms",
+ "photostar-codecs",
+ "photostar-color",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-engine",
+ "photostar-format",
+ "photostar-geom",
+ "photostar-io",
+ "photostar-raster",
+ "photostar-tablet",
+ "photostar-ui-egui",
  "resvg",
  "rfd",
  "ron",
@@ -4880,7 +4880,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-affinity"
+name = "photostar-affinity"
 version = "0.16.0"
 dependencies = [
  "crc32fast",
@@ -4890,13 +4890,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-algo"
+name = "photostar-algo"
 version = "0.16.0"
 dependencies = [
- "photocraft-color",
- "photocraft-geom",
- "photocraft-raster",
- "photocraft-testkit",
+ "photostar-color",
+ "photostar-geom",
+ "photostar-raster",
+ "photostar-testkit",
  "rayon",
  "rustfft",
  "serde",
@@ -4904,20 +4904,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-automation"
+name = "photostar-automation"
 version = "0.16.0"
 dependencies = [
  "base64 0.23.1",
  "cap-std",
  "clap",
  "getrandom 0.3.4",
- "photocraft-codecs",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-engine",
- "photocraft-format",
- "photocraft-io",
- "photocraft-raw",
+ "photostar-codecs",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-engine",
+ "photostar-format",
+ "photostar-io",
+ "photostar-raw",
  "rmcp",
  "rustix 1.1.5",
  "schemars",
@@ -4928,18 +4928,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-cli"
+name = "photostar-cli"
 version = "0.16.0"
 dependencies = [
  "clap",
  "clap_complete",
  "clap_mangen",
- "photocraft-automation",
- "photocraft-codecs",
- "photocraft-engine",
- "photocraft-format",
- "photocraft-io",
- "photocraft-raw",
+ "photostar-automation",
+ "photostar-codecs",
+ "photostar-engine",
+ "photostar-format",
+ "photostar-io",
+ "photostar-raw",
  "serde_json",
  "thiserror 2.0.21",
  "tokio",
@@ -4947,7 +4947,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-cms"
+name = "photostar-cms"
 version = "0.16.0"
 dependencies = [
  "moxcms",
@@ -4955,7 +4955,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-codecs"
+name = "photostar-codecs"
 version = "0.16.0"
 dependencies = [
  "craft-jpeg",
@@ -4965,7 +4965,7 @@ dependencies = [
  "image",
  "image-webp",
  "jpeg-encoder",
- "photocraft-heif",
+ "photostar-heif",
  "png 0.18.1",
  "proptest",
  "rayon",
@@ -4977,42 +4977,42 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-color"
+name = "photostar-color"
 version = "0.16.0"
 dependencies = [
- "photocraft-cms",
+ "photostar-cms",
  "serde",
 ]
 
 [[package]]
-name = "photocraft-compose"
+name = "photostar-compose"
 version = "0.16.0"
 dependencies = [
  "criterion",
- "photocraft-cms",
- "photocraft-color",
- "photocraft-doc",
- "photocraft-geom",
- "photocraft-paint",
- "photocraft-raster",
- "photocraft-vector",
+ "photostar-cms",
+ "photostar-color",
+ "photostar-doc",
+ "photostar-geom",
+ "photostar-paint",
+ "photostar-raster",
+ "photostar-vector",
  "proptest",
  "rayon",
 ]
 
 [[package]]
-name = "photocraft-doc"
+name = "photostar-doc"
 version = "0.16.0"
 dependencies = [
- "photocraft-color",
- "photocraft-geom",
- "photocraft-raster",
+ "photostar-color",
+ "photostar-geom",
+ "photostar-raster",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "photocraft-engine"
+name = "photostar-engine"
 version = "0.16.0"
 dependencies = [
  "blake3",
@@ -5020,26 +5020,26 @@ dependencies = [
  "craft-print",
  "exr",
  "flate2",
- "photocraft-affinity",
- "photocraft-algo",
- "photocraft-cms",
- "photocraft-codecs",
- "photocraft-color",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-format",
- "photocraft-geom",
- "photocraft-io",
- "photocraft-ipp",
- "photocraft-ops",
- "photocraft-paint",
- "photocraft-plugins",
- "photocraft-psd",
- "photocraft-raster",
- "photocraft-raw",
- "photocraft-testkit",
- "photocraft-text",
- "photocraft-vector",
+ "photostar-affinity",
+ "photostar-algo",
+ "photostar-cms",
+ "photostar-codecs",
+ "photostar-color",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-format",
+ "photostar-geom",
+ "photostar-io",
+ "photostar-ipp",
+ "photostar-ops",
+ "photostar-paint",
+ "photostar-plugins",
+ "photostar-psd",
+ "photostar-raster",
+ "photostar-raw",
+ "photostar-testkit",
+ "photostar-text",
+ "photostar-vector",
  "rayon",
  "roxmltree 0.21.1",
  "same-file",
@@ -5053,7 +5053,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-format"
+name = "photostar-format"
 version = "0.16.0"
 dependencies = [
  "blake3",
@@ -5061,11 +5061,11 @@ dependencies = [
  "exacl",
  "flate2",
  "libc",
- "photocraft-codecs",
- "photocraft-color",
- "photocraft-doc",
- "photocraft-geom",
- "photocraft-raster",
+ "photostar-codecs",
+ "photostar-color",
+ "photostar-doc",
+ "photostar-geom",
+ "photostar-raster",
  "proptest",
  "rustix 1.1.5",
  "ruzstd",
@@ -5076,63 +5076,63 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-geom"
+name = "photostar-geom"
 version = "0.16.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
-name = "photocraft-gpu"
+name = "photostar-gpu"
 version = "0.16.0"
 dependencies = [
  "bytemuck",
  "half",
  "log",
- "photocraft-algo",
- "photocraft-cms",
- "photocraft-color",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-geom",
- "photocraft-raster",
- "photocraft-vector",
+ "photostar-algo",
+ "photostar-cms",
+ "photostar-color",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-geom",
+ "photostar-raster",
+ "photostar-vector",
  "pollster 1.0.1",
  "rayon",
  "wgpu",
 ]
 
 [[package]]
-name = "photocraft-heif"
+name = "photostar-heif"
 version = "0.16.0"
 dependencies = [
  "heic-rs",
 ]
 
 [[package]]
-name = "photocraft-io"
+name = "photostar-io"
 version = "0.16.0"
 dependencies = [
  "blake3",
  "craft-docpath",
  "crc32fast",
  "flate2",
- "photocraft-affinity",
- "photocraft-algo",
- "photocraft-cms",
- "photocraft-codecs",
- "photocraft-color",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-format",
- "photocraft-geom",
- "photocraft-paint",
- "photocraft-psd",
- "photocraft-raster",
- "photocraft-raw",
- "photocraft-testkit",
- "photocraft-text",
- "photocraft-vector",
+ "photostar-affinity",
+ "photostar-algo",
+ "photostar-cms",
+ "photostar-codecs",
+ "photostar-color",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-format",
+ "photostar-geom",
+ "photostar-paint",
+ "photostar-psd",
+ "photostar-raster",
+ "photostar-raw",
+ "photostar-testkit",
+ "photostar-text",
+ "photostar-vector",
  "proptest",
  "resvg",
  "roxmltree 0.21.1",
@@ -5144,36 +5144,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-ipp"
+name = "photostar-ipp"
 version = "0.16.0"
 
 [[package]]
-name = "photocraft-ops"
+name = "photostar-ops"
 version = "0.16.0"
 dependencies = [
- "photocraft-doc",
+ "photostar-doc",
 ]
 
 [[package]]
-name = "photocraft-paint"
+name = "photostar-paint"
 version = "0.16.0"
 dependencies = [
- "photocraft-cms",
- "photocraft-color",
- "photocraft-geom",
- "photocraft-raster",
+ "photostar-cms",
+ "photostar-color",
+ "photostar-geom",
+ "photostar-raster",
  "rayon",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "photocraft-plugins"
+name = "photostar-plugins"
 version = "0.16.0"
 dependencies = [
- "photocraft-color",
- "photocraft-geom",
- "photocraft-raster",
+ "photostar-color",
+ "photostar-geom",
+ "photostar-raster",
  "rayon",
  "rustix 1.1.5",
  "serde",
@@ -5184,35 +5184,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-psd"
+name = "photostar-psd"
 version = "0.16.0"
 dependencies = [
  "flate2",
- "photocraft-psd",
+ "photostar-psd",
  "proptest",
  "serde",
  "thiserror 2.0.21",
 ]
 
 [[package]]
-name = "photocraft-raster"
+name = "photostar-raster"
 version = "0.16.0"
 dependencies = [
- "photocraft-color",
- "photocraft-geom",
+ "photostar-color",
+ "photostar-geom",
  "proptest",
  "rayon",
  "serde",
 ]
 
 [[package]]
-name = "photocraft-raw"
+name = "photostar-raw"
 version = "0.16.0"
 dependencies = [
  "flate2",
  "image",
  "jxl-oxide",
- "photocraft-raw",
+ "photostar-raw",
  "png 0.18.1",
  "rayon",
  "zune-core 0.5.3",
@@ -5221,7 +5221,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-tablet"
+name = "photostar-tablet"
 version = "0.16.0"
 dependencies = [
  "block2 0.6.2",
@@ -5233,7 +5233,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-testkit"
+name = "photostar-testkit"
 version = "0.16.0"
 dependencies = [
  "memory-stats",
@@ -5241,22 +5241,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-text"
+name = "photostar-text"
 version = "0.16.0"
 dependencies = [
  "flate2",
  "parley",
- "photocraft-color",
- "photocraft-doc",
- "photocraft-geom",
- "photocraft-psd",
- "photocraft-raster",
+ "photostar-color",
+ "photostar-doc",
+ "photostar-geom",
+ "photostar-psd",
+ "photostar-raster",
  "rayon",
  "skrifa",
 ]
 
 [[package]]
-name = "photocraft-ui-egui"
+name = "photostar-ui-egui"
 version = "0.16.0"
 dependencies = [
  "base64 0.23.1",
@@ -5270,25 +5270,25 @@ dependencies = [
  "epaint_default_fonts",
  "flate2",
  "log",
- "photocraft-algo",
- "photocraft-cms",
- "photocraft-codecs",
- "photocraft-color",
- "photocraft-compose",
- "photocraft-doc",
- "photocraft-engine",
- "photocraft-format",
- "photocraft-geom",
- "photocraft-gpu",
- "photocraft-io",
- "photocraft-paint",
- "photocraft-plugins",
- "photocraft-psd",
- "photocraft-raster",
- "photocraft-raw",
- "photocraft-testkit",
- "photocraft-text",
- "photocraft-vector",
+ "photostar-algo",
+ "photostar-cms",
+ "photostar-codecs",
+ "photostar-color",
+ "photostar-compose",
+ "photostar-doc",
+ "photostar-engine",
+ "photostar-format",
+ "photostar-geom",
+ "photostar-gpu",
+ "photostar-io",
+ "photostar-paint",
+ "photostar-plugins",
+ "photostar-psd",
+ "photostar-raster",
+ "photostar-raw",
+ "photostar-testkit",
+ "photostar-text",
+ "photostar-vector",
  "rayon",
  "serde",
  "serde_json",
@@ -5301,31 +5301,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-vector"
+name = "photostar-vector"
 version = "0.16.0"
 dependencies = [
- "photocraft-color",
- "photocraft-doc",
- "photocraft-geom",
- "photocraft-raster",
+ "photostar-color",
+ "photostar-doc",
+ "photostar-geom",
+ "photostar-raster",
  "rayon",
 ]
 
 [[package]]
-name = "photocraft-web"
+name = "photostar-web"
 version = "0.16.0"
 dependencies = [
  "eframe",
  "egui",
  "js-sys",
  "log",
- "photocraft-codecs",
- "photocraft-doc",
- "photocraft-engine",
- "photocraft-io",
- "photocraft-paint",
- "photocraft-psd",
- "photocraft-ui-egui",
+ "photostar-codecs",
+ "photostar-doc",
+ "photostar-engine",
+ "photostar-io",
+ "photostar-paint",
+ "photostar-psd",
+ "photostar-ui-egui",
  "rfd",
  "serde_json",
  "wasm-bindgen",
@@ -5334,7 +5334,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "photocraft-web-boot"
+name = "photostar-web-boot"
 version = "0.16.0"
 dependencies = [
  "flate2",

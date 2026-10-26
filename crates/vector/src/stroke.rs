@@ -5,7 +5,7 @@
 
 use std::borrow::Cow;
 
-use photocraft_doc::{LineCap, LineJoin};
+use photostar_doc::{LineCap, LineJoin};
 
 use crate::flatten::Polyline;
 

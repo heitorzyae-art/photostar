@@ -1,6 +1,6 @@
 # Summary
 
-[PhotoCraft Documentation](README.md)
+[PhotoStar Documentation](README.md)
 
 # Getting started
 

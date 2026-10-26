@@ -1,13 +1,13 @@
 //! Opening a file whose adjustment layer can't be read warns, naming the layer and the reason,
 //! instead of opening it silently without its effect (#1763).
 
-use photocraft_color::{ColorMode, SampleType};
-use photocraft_doc::{Adjustment, Document, Layer, LayerContent};
-use photocraft_geom::Size;
-use photocraft_io::*;
-use photocraft_psd::descriptor::{Descriptor, Id, UnicodeString, Value, VersionedDescriptor};
-use photocraft_psd::{Compression, LayerFlags, LayerRecord, PsdFile, TaggedBlock, Version, testgen};
-use photocraft_raster::Surface;
+use photostar_color::{ColorMode, SampleType};
+use photostar_doc::{Adjustment, Document, Layer, LayerContent};
+use photostar_geom::Size;
+use photostar_io::*;
+use photostar_psd::descriptor::{Descriptor, Id, UnicodeString, Value, VersionedDescriptor};
+use photostar_psd::{Compression, LayerFlags, LayerRecord, PsdFile, TaggedBlock, Version, testgen};
+use photostar_raster::Surface;
 
 fn reopen(adj: Adjustment, path: &str, opts: &ExportOptions) -> (Document, Vec<String>) {
     let mut d = Document::new("a", Size::new(16, 16), ColorMode::Rgb, SampleType::U8);
@@ -72,7 +72,7 @@ fn identity_cube(domain: &str) -> Vec<u8> {
 
 fn synthetic_lookup_psd(version: Version, depth: u16, cube: &[u8]) -> Vec<u8> {
     const LAYER_NAME: &str = "Custom-domain LUT";
-    let mut file = testgen::layered(version, photocraft_psd::ColorMode::Rgb, depth, Compression::Rle);
+    let mut file = testgen::layered(version, photostar_psd::ColorMode::Rgb, depth, Compression::Rle);
     let mut flags = LayerFlags::default();
     flags.set_pixel_data_irrelevant(true);
     // Photoshop stores layer-block alignment inside the block length. Make the source payload
@@ -131,7 +131,7 @@ fn photoshop_layout_color_lookup_round_trips_through_psb() {
     let mut bg = Surface::new(d.pixel_format());
     bg.fill_rect(d.bounds(), &[1.0, 0.0, 0.0, 1.0]);
     d.layers.insert(0, Layer::new("bg", LayerContent::Raster(bg)));
-    let px = photocraft_compose::flatten(&d).px[0];
+    let px = photostar_compose::flatten(&d).px[0];
     assert!(px[0] < 0.05 && (px[1] - 1.0).abs() < 0.05 && (px[2] - 1.0).abs() < 0.05, "{px:?}");
 }
 

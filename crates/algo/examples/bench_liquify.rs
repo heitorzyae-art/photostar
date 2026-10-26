@@ -1,19 +1,19 @@
 //! Liquify / Puppet / Perspective timings on a 24 MP image.
 //!
 //! ```sh
-//! cargo run --release -p photocraft-algo --example bench_liquify
+//! cargo run --release -p photostar-algo --example bench_liquify
 //! ```
 
 use std::time::Instant;
 
-use photocraft_algo::liquify::{LiquifyField, LiquifyStroke, LiquifyTool, ProxyImage, apply_liquify, auto_cell};
-use photocraft_algo::perspective::{PerspectiveMap, Plane};
-use photocraft_algo::puppet::{PuppetDensity, PuppetMode, PuppetPin, PuppetWarp, deform, render};
-use photocraft_algo::transform::Interp;
-use photocraft_algo::warp::warp_mesh_surface;
-use photocraft_color::PixelFormat;
-use photocraft_geom::Rect;
-use photocraft_raster::Surface;
+use photostar_algo::liquify::{LiquifyField, LiquifyStroke, LiquifyTool, ProxyImage, apply_liquify, auto_cell};
+use photostar_algo::perspective::{PerspectiveMap, Plane};
+use photostar_algo::puppet::{PuppetDensity, PuppetMode, PuppetPin, PuppetWarp, deform, render};
+use photostar_algo::transform::Interp;
+use photostar_algo::warp::warp_mesh_surface;
+use photostar_color::PixelFormat;
+use photostar_geom::Rect;
+use photostar_raster::Surface;
 
 fn main() {
     let (w, h) = (6000, 4000);
@@ -119,17 +119,17 @@ fn main() {
         expansion: 2.0,
     };
     let t = Instant::now();
-    let (solver, v, order) = deform(&s, b, &pw, photocraft_algo::puppet::ITERATIONS);
+    let (solver, v, order) = deform(&s, b, &pw, photostar_algo::puppet::ITERATIONS);
     println!(
         "puppet mesh {} verts / {} tris + ARAP ({} rounds): {:.1} ms",
         solver.mesh.verts.len(),
         solver.mesh.tris.len(),
-        photocraft_algo::puppet::ITERATIONS,
+        photostar_algo::puppet::ITERATIONS,
         t.elapsed().as_secs_f64() * 1e3
     );
     // Compare the old path-dependent preview with the command-equivalent drag solve, using
     // changing destinations and the same cached factorization (no remeshing per event).
-    for (label, rounds, warm) in [("6 warm rounds", 6, true), ("canonical cold solve", photocraft_algo::puppet::ITERATIONS, false)] {
+    for (label, rounds, warm) in [("6 warm rounds", 6, true), ("canonical cold solve", photostar_algo::puppet::ITERATIONS, false)] {
         let mut previous = v.clone();
         let mut times = Vec::new();
         for step in 1..=60 {

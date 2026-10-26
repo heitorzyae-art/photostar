@@ -8,9 +8,9 @@
 
 use std::sync::Arc;
 
-use photocraft_color::{PixelFormat, SampleType, read_sample, write_sample};
-use photocraft_geom::{Rect, TILE_SIZE, TileCoord};
-use photocraft_raster::{Surface, Tile};
+use photostar_color::{PixelFormat, SampleType, read_sample, write_sample};
+use photostar_geom::{Rect, TILE_SIZE, TileCoord};
+use photostar_raster::{Surface, Tile};
 
 use crate::photo_util::par_map;
 

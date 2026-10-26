@@ -1,10 +1,10 @@
 //! Camera Raw's preview develop on the 858×572 proxy of a 6000×4000 image: the CPU develop
 //! against the GPU pass (upload, render, readback), for per-pixel settings.
-//! `cargo run --release -p photocraft-gpu --example bench_camera_raw [-- --quick]`
+//! `cargo run --release -p photostar-gpu --example bench_camera_raw [-- --quick]`
 use std::time::Instant;
 
-use photocraft_algo::camera_raw::{CameraRaw, Wheel, develop, per_pixel, white_black_points};
-use photocraft_gpu::CameraRawDevelop;
+use photostar_algo::camera_raw::{CameraRaw, Wheel, develop, per_pixel, white_black_points};
+use photostar_gpu::CameraRawDevelop;
 
 fn median(mut v: Vec<f64>) -> f64 {
     v.sort_by(f64::total_cmp);

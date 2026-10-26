@@ -2,16 +2,16 @@
 
 use std::sync::Arc;
 
-use photocraft_color::{BlendMode, ColorMode, PixelFormat, SampleType};
-use photocraft_doc::{
+use photostar_color::{BlendMode, ColorMode, PixelFormat, SampleType};
+use photostar_doc::{
     AlphaChannel, Document, Effects, FillCache, Group, Layer, LayerContent, LayerMask, ShapeLayer, SmartContentsId, SmartObject, SmartSource, TextLayer,
 };
-use photocraft_geom::{Rect, Size, TILE_SIZE};
-use photocraft_psd::layer::{CHANNEL_REAL_USER_MASK, CHANNEL_TRANSPARENCY, CHANNEL_USER_MASK};
-use photocraft_psd::resources::ids;
-use photocraft_psd::tagged::BlockData;
-use photocraft_psd::{ColorMode as PsdMode, LayerNode, LayerRecord, PsdFile, TaggedBlock};
-use photocraft_raster::Surface;
+use photostar_geom::{Rect, Size, TILE_SIZE};
+use photostar_psd::layer::{CHANNEL_REAL_USER_MASK, CHANNEL_TRANSPARENCY, CHANNEL_USER_MASK};
+use photostar_psd::resources::ids;
+use photostar_psd::tagged::BlockData;
+use photostar_psd::{ColorMode as PsdMode, LayerNode, LayerRecord, PsdFile, TaggedBlock};
+use photostar_raster::Surface;
 
 use crate::adjust_map::{self, ADJUSTMENT_KEYS};
 use crate::blocks;
@@ -56,9 +56,9 @@ pub(crate) struct Ctx<'a> {
     /// Document resolution (type sizes are converted to points with it).
     pub dpi: f32,
     /// The parsed `Txt2` block (type settings EngineData lacks, e.g. optical kerning).
-    pub txt2: Option<photocraft_text::engine_data::Value>,
+    pub txt2: Option<photostar_text::engine_data::Value>,
     /// Smart-filter caches from the global `FEid`/`FXid` blocks (filter masks, by placed id).
-    pub filter_effects: Vec<photocraft_psd::filter_effects::FilterEffectsItem>,
+    pub filter_effects: Vec<photostar_psd::filter_effects::FilterEffectsItem>,
     /// Filter masks already decoded, by placed id: every layer of a source reads the same item, and
     /// a surface clones by sharing its tiles.
     pub filter_masks: std::collections::HashMap<String, Option<LayerMask>>,
@@ -71,7 +71,7 @@ pub(crate) struct Ctx<'a> {
     /// Source sizes of `PlLd`-only placed layers, by source id (read once per embedded file).
     pub plld_sizes: std::collections::HashMap<String, Option<(f64, f64)>>,
     /// Cancellation and progress for background opens (checked per layer record).
-    pub ctl: photocraft_raster::Interrupt<'a>,
+    pub ctl: photostar_raster::Interrupt<'a>,
     /// Layer records decoded so far, out of `total` (progress).
     pub done: usize,
     pub total: usize,
@@ -92,7 +92,7 @@ fn doc_mode(m: PsdMode) -> Option<ColorMode> {
 }
 
 // Real-mask metadata without a -3 channel still selects the synthetic -2 mask.
-fn selected_real_mask(rec: &LayerRecord) -> Option<photocraft_psd::RealMask> {
+fn selected_real_mask(rec: &LayerRecord) -> Option<photostar_psd::RealMask> {
     rec.channel(CHANNEL_REAL_USER_MASK)?;
     rec.layer_mask()?.real
 }
@@ -110,7 +110,7 @@ fn shape_mask_params(rec: &LayerRecord) -> (f32, f32) {
 /// with a vector mask: when it fills with a pattern, which the shape renderer can't draw (`.1`
 /// true when its vector mask is also soft: a density below 100 % or a feather). Other soft
 /// shapes stay shapes with that density and feather.
-fn soft_shape_fill(rec: &LayerRecord, has_vector: bool, fill_key: Option<&[u8; 4]>) -> Option<(photocraft_doc::Fill, bool)> {
+fn soft_shape_fill(rec: &LayerRecord, has_vector: bool, fill_key: Option<&[u8; 4]>) -> Option<(photostar_doc::Fill, bool)> {
     if !has_vector || rec.block(b"vstk").is_some() || rec.block(b"vscg").is_some() {
         return None;
     }
@@ -122,7 +122,7 @@ fn soft_shape_fill(rec: &LayerRecord, has_vector: bool, fill_key: Option<&[u8; 4
     // document's patterns for fill layers), and its stored pixels may be the unclipped fill
     // (our own export writes fill layers so, #1907): it is a pattern fill layer seen through
     // its vector mask.
-    let pattern = matches!(fill, photocraft_doc::Fill::Pattern { .. });
+    let pattern = matches!(fill, photostar_doc::Fill::Pattern { .. });
     pattern.then_some((fill, soft))
 }
 
@@ -131,9 +131,9 @@ fn soft_shape_fill(rec: &LayerRecord, has_vector: bool, fill_key: Option<&[u8; 4
 #[derive(Default)]
 struct Placement {
     id: String,
-    transform: photocraft_geom::Affine,
+    transform: photostar_geom::Affine,
     perspective: Option<[f64; 9]>,
-    warp: Option<photocraft_geom::warp::Warp>,
+    warp: Option<photostar_geom::warp::Warp>,
 }
 
 impl Ctx<'_> {
@@ -300,7 +300,7 @@ impl Ctx<'_> {
         mask
     }
 
-    fn apply_common(&mut self, l: &mut Layer, rec: &LayerRecord, blend_override: Option<photocraft_psd::BlendMode>) {
+    fn apply_common(&mut self, l: &mut Layer, rec: &LayerRecord, blend_override: Option<photostar_psd::BlendMode>) {
         l.visible = rec.is_visible();
         l.opacity = f32::from(rec.opacity) / 255.0;
         l.fill_opacity = f32::from(rec.fill_opacity()) / 255.0;
@@ -359,7 +359,7 @@ impl Ctx<'_> {
         // The layer's XMP packet (`shmd` › `cust` › `layerXMP`) becomes the field; the rest of
         // `shmd` stays in `psd_blocks`, where export puts the packet back.
         if let Some(i) = l.psd_blocks.iter().position(|(k, _)| k == b"shmd")
-            && let Some((xmp, rest)) = photocraft_psd::metadata::take_layer_xmp(&l.psd_blocks[i].1)
+            && let Some((xmp, rest)) = photostar_psd::metadata::take_layer_xmp(&l.psd_blocks[i].1)
         {
             l.xmp = Some(Arc::from(xmp));
             match rest {
@@ -402,7 +402,7 @@ impl Ctx<'_> {
             );
             // Kept verbatim for saving, but it renders as nothing: say so rather than open the
             // layer silently without its effect (#1763).
-            if matches!(adj, photocraft_doc::Adjustment::Unsupported { .. }) {
+            if matches!(adj, photostar_doc::Adjustment::Unsupported { .. }) {
                 // Photoshop 2026's Light adjustment shares the Brightness/Contrast key (#6542).
                 let light = k == b"brit" && adjust_map::is_extended_brit(cged);
                 let why = if light {
@@ -423,28 +423,28 @@ impl Ctx<'_> {
             // text), so its TySh is saved back verbatim instead of being dropped with the raster.
             let parsed = (!block.is_foreign_order())
                 .then(|| {
-                    photocraft_text::psd::text_layer_from_tysh(&block.data, self.dpi).or_else(|| {
+                    photostar_text::psd::text_layer_from_tysh(&block.data, self.dpi).or_else(|| {
                         let (text, transform) = blocks::parse_tysh(&block.data).unwrap_or_default();
-                        photocraft_text::psd::transform_is_safe(&transform).then(|| TextLayer { text, transform, ..Default::default() })
+                        photostar_text::psd::transform_is_safe(&transform).then(|| TextLayer { text, transform, ..Default::default() })
                     })
                 })
                 .flatten();
             if let Some(mut t) = parsed {
                 let mut path_error = None;
                 if let Some(txt2) = &self.txt2 {
-                    photocraft_text::psd::apply_txt2(&mut t, &block.data, txt2);
+                    photostar_text::psd::apply_txt2(&mut t, &block.data, txt2);
                     // Type on a path keeps its path only in its `Txt2` frame (#7962).
-                    path_error = photocraft_text::psd::apply_txt2_path(&mut t, &block.data, txt2).err();
-                    photocraft_text::psd::apply_txt2_frame(&mut t, &block.data, txt2);
+                    path_error = photostar_text::psd::apply_txt2_path(&mut t, &block.data, txt2).err();
+                    photostar_text::psd::apply_txt2_frame(&mut t, &block.data, txt2);
                 }
                 if let Some(e) = path_error {
-                    let shape = if matches!(t.shape, photocraft_doc::text::TextShape::Box { .. }) { "paragraph" } else { "point" };
+                    let shape = if matches!(t.shape, photostar_doc::text::TextShape::Box { .. }) { "paragraph" } else { "point" };
                     self.warn(format!("layer \"{name}\": its type path could not be read ({e}); it opens as {shape} text"));
                 }
                 // Photoshop's pixels stay until edited. Writers without type pixels are
                 // rendered by text_import::prepare instead of retaining an empty cache.
                 let cache = self.record_surface(rec, &name);
-                let drawn = !cache.content_bounds().is_empty() || photocraft_text::psd::engine_text_is_blank(&block.data);
+                let drawn = !cache.content_bounds().is_empty() || photostar_text::psd::engine_text_is_blank(&block.data);
                 t.cache = drawn.then_some(cache);
                 t.psd_raw = principal(b"TySh");
                 LayerContent::Text(t)
@@ -497,7 +497,7 @@ impl Ctx<'_> {
                         }
                     };
                     match unfiltered {
-                        Some(u) => photocraft_compose::filter_mask::mix(&u, &stored, m),
+                        Some(u) => photostar_compose::filter_mask::mix(&u, &stored, m),
                         None => stored,
                     }
                 }
@@ -520,7 +520,7 @@ impl Ctx<'_> {
             // A pattern-filled shape is a pattern fill layer seen through its vector mask (soft
             // or not). Unless that mask is soft, the stored pixels stay its rendering (a soft
             // mask's pixels lack the fill beyond the path).
-            if !soft && matches!(f, photocraft_doc::Fill::Pattern { .. }) && !rec.rect.is_empty() {
+            if !soft && matches!(f, photostar_doc::Fill::Pattern { .. }) && !rec.rect.is_empty() {
                 fill_cache = Some(FillCache { fill: f.clone(), surface: self.record_surface(rec, &name) });
             }
             LayerContent::Fill(f)
@@ -537,7 +537,7 @@ impl Ctx<'_> {
             let soft = sh.has_soft_mask() && sh.fill.is_some();
             if soft || ((rec.rect.is_empty() || rec.rect.size().is_err()) && (!sh.path.subpaths.is_empty() || sh.path.inverted)) {
                 let canvas = Rect::new(0, 0, self.file.header.width as i32, self.file.header.height as i32);
-                sh.cache = Some(photocraft_vector::render_shape(&sh, self.fmt, canvas));
+                sh.cache = Some(photostar_vector::render_shape(&sh, self.fmt, canvas));
             }
             LayerContent::Shape(sh)
         } else if let Some(k) = fill_key {
@@ -562,7 +562,7 @@ impl Ctx<'_> {
                 "layer \"{name}\": its adjustment settings could not be read (unknown adjustment type \"{key}\"); the layer is kept as saved but has no effect"
             ));
             let raw = rec.block(&k).map(|b| b.data.as_slice()).unwrap_or_default().into();
-            LayerContent::Adjustment(photocraft_doc::Adjustment::Unsupported { psd_key: key, raw })
+            LayerContent::Adjustment(photostar_doc::Adjustment::Unsupported { psd_key: key, raw })
         } else {
             LayerContent::Raster(self.record_surface(rec, &name))
         };
@@ -620,18 +620,18 @@ impl Ctx<'_> {
                     let rec = &layers[*index];
                     // The recursion here (and in every later consumer of the tree) is bounded by
                     // the document model's nesting cap; a deeper subtree is not imported.
-                    let children = if depth >= photocraft_doc::MAX_GROUP_DEPTH {
+                    let children = if depth >= photostar_doc::MAX_GROUP_DEPTH {
                         self.warn(format!(
                             "group `{}` nests deeper than {} groups; its contents were not imported",
                             rec.name(),
-                            photocraft_doc::MAX_GROUP_DEPTH
+                            photostar_doc::MAX_GROUP_DEPTH
                         ));
                         Vec::new()
                     } else {
                         self.build(children, depth + 1)
                     };
                     let sd = rec.section_divider();
-                    let expanded = sd.is_none_or(|s| s.kind != photocraft_psd::SectionType::ClosedFolder);
+                    let expanded = sd.is_none_or(|s| s.kind != photostar_psd::SectionType::ClosedFolder);
                     let artboard = crate::comps_map::ARTBOARD_KEYS.iter().find_map(|k| rec.block(k)).and_then(|b| crate::comps_map::parse_artboard(&b.data));
                     let mut l = Layer::new(rec.name(), LayerContent::Group(Group { children, expanded, artboard }));
                     l.psd_blocks = preserved_blocks(rec);
@@ -652,7 +652,7 @@ fn apply_link_groups(nodes: &[LayerNode], layers: &mut [Layer], ids: &[u16]) {
                 LayerNode::Layer { index } => *index,
                 LayerNode::Group { index, children, .. } => {
                     // Matches the importer's nesting cap: deeper children were not imported.
-                    if depth < photocraft_doc::MAX_GROUP_DEPTH
+                    if depth < photostar_doc::MAX_GROUP_DEPTH
                         && let LayerContent::Group(g) = &mut l.content
                     {
                         rec(children, &mut g.children, ids, depth + 1);
@@ -669,8 +669,8 @@ fn apply_link_groups(nodes: &[LayerNode], layers: &mut [Layer], ids: &[u16]) {
 /// Rejects a file whose groups nest deeper than the document model's cap, with the actionable
 /// limit error. Nesting past the cap could never be saved (.pcraft refuses it).
 pub(crate) fn check_group_depth(file: &PsdFile) -> Result<(), crate::IoError> {
-    if group_depth(file) > photocraft_doc::MAX_GROUP_DEPTH {
-        return Err(crate::IoError::Unsupported(format!("layer groups nested deeper than {}", photocraft_doc::MAX_GROUP_DEPTH)));
+    if group_depth(file) > photostar_doc::MAX_GROUP_DEPTH {
+        return Err(crate::IoError::Unsupported(format!("layer groups nested deeper than {}", photostar_doc::MAX_GROUP_DEPTH)));
     }
     Ok(())
 }
@@ -678,7 +678,7 @@ pub(crate) fn check_group_depth(file: &PsdFile) -> Result<(), crate::IoError> {
 /// Deepest group nesting of the file's layer records (a layer inside this many groups is the
 /// deepest), computed like `layer_tree`'s stack — iteratively, so no file can make it recurse.
 pub(crate) fn group_depth(file: &PsdFile) -> usize {
-    use photocraft_psd::tagged::SectionType;
+    use photostar_psd::tagged::SectionType;
     let (mut open, mut depth) = (0usize, 0usize);
     for rec in file.layers() {
         match rec.section_type() {
@@ -706,7 +706,7 @@ const LAYER_INFO_KEYS: [&[u8; 4]; 50] = [
 ];
 
 /// The key of an adjustment layer whose type no mapper knows (#6575), e.g. Photoshop 4's
-/// `hue ` or a type newer than PhotoCraft. Photoshop writes every adjustment layer without
+/// `hue ` or a type newer than PhotoStar. Photoshop writes every adjustment layer without
 /// pixels and with "pixel data irrelevant" set (every one in the corpus; pixel, type and smart
 /// layers never have it). Such a record that is not a group and carries exactly one block that
 /// is neither a known layer-information key nor a known adjustment is that adjustment. More than
@@ -758,10 +758,10 @@ fn merged_plane(all: &[u8], i: usize, plane: usize) -> Option<&[u8]> {
 /// RGB. An output over `cap` bytes is refused, never allocated (#5200).
 fn flat_composite(
     file: &PsdFile,
-    merged: Option<&Result<Vec<u8>, photocraft_psd::PsdError>>,
+    merged: Option<&Result<Vec<u8>, photostar_psd::PsdError>>,
     cap: u64,
-) -> Result<photocraft_psd::RgbaImage, photocraft_psd::PsdError> {
-    use photocraft_psd::PsdError;
+) -> Result<photostar_psd::RgbaImage, photostar_psd::PsdError> {
+    use photostar_psd::PsdError;
     match file.composite_rgba8() {
         Ok(img) => return Ok(img),
         // Over the output budget: the fallback below would make the same allocation.
@@ -786,12 +786,12 @@ fn flat_composite(
     data.resize(len, 255u8);
     for c in 0..3.min(usize::from(h.channels)) {
         let bytes = merged_plane(all, c, plane).ok_or_else(|| PsdError::Invalid("channel size mismatch".into()))?;
-        let p = photocraft_psd::pixels::plane_to_u8(bytes, h.depth, w, hh)?;
+        let p = photostar_psd::pixels::plane_to_u8(bytes, h.depth, w, hh)?;
         for (px, v) in data.as_chunks_mut::<4>().0.iter_mut().zip(&p) {
             px[c] = *v;
         }
     }
-    Ok(photocraft_psd::RgbaImage { left: 0, top: 0, width: h.width, height: h.height, data })
+    Ok(photostar_psd::RgbaImage { left: 0, top: 0, width: h.width, height: h.height, data })
 }
 
 /// Writes RGBA8 `data` covering `canvas` into `s`, a band of tile rows at a time (no full-size
@@ -807,7 +807,7 @@ fn write_rgba8(s: &mut Surface, canvas: Rect, data: &[u8]) {
         let Some(rows) = data.get(start..start.saturating_add((band.height() as usize).saturating_mul(row))) else { break };
         vals.clear();
         for p in rows.as_chunks::<4>().0 {
-            vals.extend(photocraft_raster::from_rgba(&fmt, p.map(|x| f32::from(x) / 255.0)));
+            vals.extend(photostar_raster::from_rgba(&fmt, p.map(|x| f32::from(x) / 255.0)));
         }
         s.write_region(band, &vals);
         y = band.y1;
@@ -873,17 +873,17 @@ fn mark_background(file: &PsdFile, layers: &mut [Layer]) {
 /// Converts a parsed PSD into a document, preserving best-effort recovery warnings.
 pub fn psd_to_document(file: &PsdFile) -> (Document, Vec<String>) {
     // Never cancelled, so always `Some`; the fallback is unreachable.
-    psd_to_document_with(file, &photocraft_raster::Interrupt::NONE)
+    psd_to_document_with(file, &photostar_raster::Interrupt::NONE)
         .unwrap_or_else(|| (Document::new("Untitled", Size::new(1, 1), ColorMode::Rgb, SampleType::U8), Vec::new()))
 }
 
 /// [`psd_to_document`] for a background open: checks `ctl` per layer record and reports
 /// progress. `None` when cancelled.
-pub fn psd_to_document_with(file: &PsdFile, ctl: &photocraft_raster::Interrupt) -> Option<(Document, Vec<String>)> {
+pub fn psd_to_document_with(file: &PsdFile, ctl: &photostar_raster::Interrupt) -> Option<(Document, Vec<String>)> {
     psd_to_document_decoded(file, ctl, None)
 }
 
-/// Whether `file` stores spot planes the way earlier PhotoCraft versions (releases 0.1.0 to
+/// Whether `file` stores spot planes the way earlier PhotoStar versions (releases 0.1.0 to
 /// 0.16.0) wrote them: straight (the maximum = solid ink), the opposite of Photoshop, which
 /// stores 0 = solid ink in every PSD and TIFF it saves. Their files are recognised by three
 /// things together:
@@ -891,8 +891,8 @@ pub fn psd_to_document_with(file: &PsdFile, ctl: &photocraft_raster::Interrupt) 
 /// - DisplayInfo (1077) marks at least one spot channel;
 /// - there is no Alpha Identifiers resource (1053), or one that lists fewer channels than the
 ///   file has ([`photoshop_identified_channels`]). Photoshop has written it, one identifier per
-///   extra channel, in every file with an extra channel since version 6, and PhotoCraft writes it
-///   now. No earlier PhotoCraft wrote one of its own, but each kept the 1053 of a Photoshop file
+///   extra channel, in every file with an extra channel since version 6, and PhotoStar writes it
+///   now. No earlier PhotoStar wrote one of its own, but each kept the 1053 of a Photoshop file
 ///   it opened (a transparent document's `[0]`, for one) and wrote it back unchanged, after the
 ///   channels added in it, which it stored straight;
 /// - the version info (1057) is byte for byte what those versions wrote: writer "Adobe Photoshop"
@@ -901,16 +901,16 @@ pub fn psd_to_document_with(file: &PsdFile, ctl: &photocraft_raster::Interrupt) 
 ///
 /// Any other file is read in Photoshop's polarity. psd-tools' `cmyk-spot.psd`, for one, also has
 /// spots and no 1053, but names psd-tools in 1057 and stores Photoshop's polarity. A Photoshop
-/// file that an earlier PhotoCraft opened and saved again kept Photoshop's 1053 and its planes as
+/// file that an earlier PhotoStar opened and saved again kept Photoshop's 1053 and its planes as
 /// Photoshop stored them, so it is read in Photoshop's polarity too; when channels were added
 /// there, only the planes after the ones the kept 1053 lists are read straight.
 ///
 /// Keeping these files' ink is the only reason this exists: deleting it (and its one caller)
 /// reads every file in Photoshop's polarity, at the cost of inverting the spot ink of PSDs saved
 /// by those versions.
-pub(crate) fn earlier_photocraft_spot_planes(file: &PsdFile) -> bool {
-    use photocraft_psd::descriptor::UnicodeString;
-    use photocraft_psd::resources::VersionInfo;
+pub(crate) fn earlier_photostar_spot_planes(file: &PsdFile) -> bool {
+    use photostar_psd::descriptor::UnicodeString;
+    use photostar_psd::resources::VersionInfo;
 
     let marks_spot = file.resource(crate::channel_map::DISPLAY_INFO).is_some_and(|r| crate::channel_map::display_info_marks_spot(&r.data));
     let identifies_every_channel = match file.header.color_mode.color_channels() {
@@ -940,7 +940,7 @@ pub(crate) fn earlier_photocraft_spot_planes(file: &PsdFile) -> bool {
 /// How many extra channels, after the merged transparency, the Alpha Identifiers resource (1053)
 /// lists: its identifiers other than 0, which Photoshop gives the merged transparency (first, and
 /// in some files with no transparency plane at all). 0 without a 1053. In a file from an earlier
-/// PhotoCraft ([`earlier_photocraft_spot_planes`]) these are the channels of the Photoshop file
+/// PhotoStar ([`earlier_photostar_spot_planes`]) these are the channels of the Photoshop file
 /// it opened, stored as Photoshop stored them; the channels after them were added there.
 pub(crate) fn photoshop_identified_channels(file: &PsdFile) -> usize {
     file.resource(crate::channel_map::ALPHA_IDENTIFIERS).map_or(0, |r| r.data.as_chunks::<4>().0.iter().filter(|id| **id != [0; 4]).count())
@@ -966,8 +966,8 @@ pub(crate) fn can_recover_layers(file: &PsdFile) -> bool {
 /// [`PsdFile::from_bytes_and_merged`] with [`merged_needed`]), so it is not decoded again.
 pub(crate) fn psd_to_document_decoded(
     file: &PsdFile,
-    ctl: &photocraft_raster::Interrupt,
-    decoded: Option<photocraft_psd::Result<Vec<u8>>>,
+    ctl: &photostar_raster::Interrupt,
+    decoded: Option<photostar_psd::Result<Vec<u8>>>,
 ) -> Option<(Document, Vec<String>)> {
     psd_to_document_decoded_integrity(file, ctl, decoded).map(|(document, warnings, _)| (document, warnings))
 }
@@ -977,8 +977,8 @@ pub(crate) fn psd_to_document_decoded(
 /// the low-level conversion API retain their existing best-effort behaviour.
 pub(crate) fn psd_to_document_decoded_integrity(
     file: &PsdFile,
-    ctl: &photocraft_raster::Interrupt,
-    decoded: Option<photocraft_psd::Result<Vec<u8>>>,
+    ctl: &photostar_raster::Interrupt,
+    decoded: Option<photostar_psd::Result<Vec<u8>>>,
 ) -> Option<(Document, Vec<String>, bool)> {
     let h = &file.header;
     let mut warnings = Vec::new();
@@ -995,7 +995,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
     for r in &file.resources {
         match r.id {
             ids::RESOLUTION_INFO => {
-                if let Ok(ri) = photocraft_psd::ResolutionInfo::from_bytes(&r.data) {
+                if let Ok(ri) = photostar_psd::ResolutionInfo::from_bytes(&r.data) {
                     // Fixed 16.16 hRes/vRes are pixels per inch. The unit shorts only
                     // say how to show that number (1 = px/in, 2 = px/cm).
                     let (x, y) = (ri.h_res(), ri.v_res());
@@ -1018,7 +1018,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
                 }
             }
             id if crate::vector_map::SAVED_PATHS.contains(&id) => match crate::vector_map::path_from_resource(&r.data, h.width, h.height) {
-                Some(path) => doc.paths.push(photocraft_doc::NamedPath {
+                Some(path) => doc.paths.push(photostar_doc::NamedPath {
                     name: String::from_utf8_lossy(&r.name).into_owned(),
                     path,
                     psd_raw: Some(Arc::new(r.data.clone())),
@@ -1032,7 +1032,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
                 // Kept raw (layout beyond the name is not modelled); the name is exposed.
                 let n = usize::from(r.data.first().copied().unwrap_or(0));
                 let name = r.data.get(1..1 + n).map(|b| String::from_utf8_lossy(b).into_owned()).unwrap_or_default();
-                doc.clipping_path = Some(photocraft_doc::ClippingPath { name, flatness: 0.0 });
+                doc.clipping_path = Some(photostar_doc::ClippingPath { name, flatness: 0.0 });
                 doc.metadata.psd_resources.push((r.id, String::from_utf8_lossy(&r.name).into_owned(), Arc::new(r.data.clone())));
             }
             // Resource 1053 is written afresh with the extra channels on every save, so a kept copy
@@ -1079,7 +1079,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
         warnings,
         damaged,
         dpi: doc.resolution_dpi,
-        txt2: file.global_blocks.iter().find(|b| &b.key == b"Txt2").and_then(|b| photocraft_text::psd::parse_txt2(&b.data)),
+        txt2: file.global_blocks.iter().find(|b| &b.key == b"Txt2").and_then(|b| photostar_text::psd::parse_txt2(&b.data)),
         filter_effects: Vec::new(),
         filter_masks: Default::default(),
         unfiltered: Default::default(),
@@ -1095,7 +1095,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
         if ctl.cancelled() {
             return None;
         }
-        match photocraft_psd::filter_effects::FilterEffects::parse(&b.data) {
+        match photostar_psd::filter_effects::FilterEffects::parse(&b.data) {
             Ok(fx) => cx.filter_effects.extend(fx.items),
             Err(e) => cx.warn(format!("smart filter masks ({}) could not be read: {e}", b.key_str())),
         }
@@ -1145,18 +1145,18 @@ pub(crate) fn psd_to_document_decoded_integrity(
     } else if layered {
         // Capped like `build` (#2940): a group past the document's nesting cap keeps no children,
         // so no file can make this tree, or anything walking or dropping it, recurse deeper.
-        let tree = file.layer_tree_max_depth(photocraft_doc::MAX_GROUP_DEPTH);
+        let tree = file.layer_tree_max_depth(photostar_doc::MAX_GROUP_DEPTH);
         // Colours stored in the document's CMYK space (Gradient Map stops…) convert through
         // its own profile, as the compositor and the PSD writer read them.
-        let space = photocraft_compose::cmyk_space(&doc);
-        doc.layers = photocraft_color::convert::with_cmyk_space(space.as_ref(), || cx.build(&tree, 0));
+        let space = photostar_compose::cmyk_space(&doc);
+        doc.layers = photostar_color::convert::with_cmyk_space(space.as_ref(), || cx.build(&tree, 0));
         // Photoshop's Background: the bottom record stored without a transparency channel (-1),
         // locked whatever its (localized) name and whether or not the file carries an `lspf`
         // block. Its name is kept.
         mark_background(file, &mut doc.layers);
         // Layer › Link Layers: resource 1026 holds one group id per layer record (0 = unlinked).
-        if let Some(Ok(photocraft_psd::resources::ResourceData::LayerGroupInfo(groups))) =
-            file.resources.iter().find(|r| r.id == ids::LAYER_GROUP_INFO).and_then(photocraft_psd::resources::ImageResource::parsed)
+        if let Some(Ok(photostar_psd::resources::ResourceData::LayerGroupInfo(groups))) =
+            file.resources.iter().find(|r| r.id == ids::LAYER_GROUP_INFO).and_then(photostar_psd::resources::ImageResource::parsed)
         {
             apply_link_groups(&tree, &mut doc.layers, &groups);
         }
@@ -1181,7 +1181,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
             if alpha_idx.is_some() {
                 // Undo Photoshop's white matting of the merged image.
                 // A band of tile rows at a time (no full-size float copy of the image).
-                let white = photocraft_raster::from_rgba(&fmt, [1.0, 1.0, 1.0, 1.0]);
+                let white = photostar_raster::from_rgba(&fmt, [1.0, 1.0, 1.0, 1.0]);
                 let mut vals = Vec::new();
                 let mut y = canvas.y0;
                 while y < canvas.y1 {
@@ -1219,7 +1219,7 @@ pub(crate) fn psd_to_document_decoded_integrity(
             let count = u16_of(crate::palette_map::COLOR_TABLE_COUNT).map_or(256, usize::from).clamp(1, 256);
             let colors = (0..count).map(|i| [m[i], m[256 + i], m[512 + i]]).collect();
             let transparent = u16_of(crate::palette_map::TRANSPARENCY_INDEX).filter(|&i| usize::from(i) < count).map(|i| i as u8);
-            doc.color_table = Some(photocraft_doc::ColorTable { colors, transparent });
+            doc.color_table = Some(photostar_doc::ColorTable { colors, transparent });
         } else if h.color_mode == PsdMode::Duotone && !file.color_mode_data.is_empty() {
             // The inks (`duotone_map`); the block is also kept raw, written back while they stay
             // unedited. An ink whose colour is unknown (a colour book without its Lab equivalent)
@@ -1230,12 +1230,12 @@ pub(crate) fn psd_to_document_decoded_integrity(
             if inks.is_none() {
                 cx.warn("duotone inks are not interpreted (shown as grayscale)");
             }
-            let inks = inks.unwrap_or_else(|| vec![photocraft_doc::DuotoneInk::new("Black", [0.0; 3])]);
-            doc.duotone = Some(photocraft_doc::Duotone { inks, psd_raw: Some(file.color_mode_data.as_slice().into()) });
+            let inks = inks.unwrap_or_else(|| vec![photostar_doc::DuotoneInk::new("Black", [0.0; 3])]);
+            doc.duotone = Some(photostar_doc::Duotone { inks, psd_raw: Some(file.color_mode_data.as_slice().into()) });
         } else if !file.color_mode_data.is_empty() {
             cx.warn("color mode data is not preserved");
         }
-        match flat_composite(file, merged.as_ref(), photocraft_psd::compression::MAX_DECODED_BYTES) {
+        match flat_composite(file, merged.as_ref(), photostar_psd::compression::MAX_DECODED_BYTES) {
             Ok(mut img) => {
                 // Resource 1047: pixels of the transparent entry are transparent.
                 if h.color_mode == PsdMode::Indexed
@@ -1273,9 +1273,9 @@ pub(crate) fn psd_to_document_decoded_integrity(
         let names = names.get(skip..).unwrap_or_default();
         // Which planes hold spot ink in Photoshop's polarity (0 = solid): the DisplayInfo records
         // the channel options are read from below, the transparency's first when `skip` is 1.
-        // A file from an earlier PhotoCraft stores them straight and is read as it was written,
+        // A file from an earlier PhotoStar stores them straight and is read as it was written,
         // past the channels of the Photoshop file it opened, if any.
-        let straight_from = if earlier_photocraft_spot_planes(file) { photoshop_identified_channels(file) } else { usize::MAX };
+        let straight_from = if earlier_photostar_spot_planes(file) { photoshop_identified_channels(file) } else { usize::MAX };
         let photoshop_spots = if let Some(r) = file.resource(crate::channel_map::DISPLAY_INFO) {
             crate::channel_map::spot_flags(&r.data, true, skip)
         } else if let Some(r) = file.resource(crate::channel_map::DISPLAY_INFO_OLD) {
@@ -1335,9 +1335,9 @@ pub(crate) fn psd_to_document_decoded_integrity(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use photocraft_psd::descriptor::UnicodeString;
-    use photocraft_psd::resources::VersionInfo;
-    use photocraft_psd::{Compression, ImageData, ImageResource, PsdError, Version, testgen};
+    use photostar_psd::descriptor::UnicodeString;
+    use photostar_psd::resources::VersionInfo;
+    use photostar_psd::{Compression, ImageData, ImageResource, PsdError, Version, testgen};
 
     /// #5200: the Multichannel fallback checks its RGBA output against the budget before
     /// allocating it (here a 2x2 image, 16 bytes, against caps of 15 and 16 bytes).
@@ -1362,7 +1362,7 @@ mod tests {
         file.header.width = 60_000;
         file.header.height = 60_000;
         let merged = Ok(vec![0u8; 16]);
-        let cap = photocraft_psd::compression::MAX_DECODED_BYTES;
+        let cap = photostar_psd::compression::MAX_DECODED_BYTES;
         assert!(matches!(flat_composite(&file, Some(&merged), cap), Err(PsdError::LimitExceeded(_))));
     }
 
@@ -1384,7 +1384,7 @@ mod tests {
         channel.data.clear();
         assert!(file.layers()[0].decode_channel(0, file.header.depth, file.header.version).is_err());
 
-        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photocraft_raster::Interrupt::NONE, None).unwrap();
+        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photostar_raster::Interrupt::NONE, None).unwrap();
         assert!(damaged);
         assert!(warnings.iter().any(|w| w.contains("could not be decoded")));
     }
@@ -1396,7 +1396,7 @@ mod tests {
         let channel = file.layers_mut()[0].channels.iter_mut().find(|c| c.id == CHANNEL_USER_MASK).unwrap();
         channel.data.clear();
 
-        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photocraft_raster::Interrupt::NONE, None).unwrap();
+        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photostar_raster::Interrupt::NONE, None).unwrap();
         assert!(damaged);
         assert!(warnings.iter().any(|w| w.contains("could not be decoded")));
     }
@@ -1408,7 +1408,7 @@ mod tests {
         let mut file = testgen::small(Version::Psd, Compression::Raw);
         file.layers_mut()[0].channels.retain(|c| c.id == CHANNEL_USER_MASK);
 
-        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photocraft_raster::Interrupt::NONE, None).unwrap();
+        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photostar_raster::Interrupt::NONE, None).unwrap();
         assert!(damaged);
         assert!(warnings.iter().any(|w| w.contains("no channel data")));
     }
@@ -1422,7 +1422,7 @@ mod tests {
         file.layers_mut()[0].channels.retain(|c| c.id == CHANNEL_USER_MASK);
         file.layers_mut()[0].rect = Default::default();
 
-        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photocraft_raster::Interrupt::NONE, None).unwrap();
+        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photostar_raster::Interrupt::NONE, None).unwrap();
         assert!(!damaged, "an empty layer marked the PSD damaged: {warnings:?}");
     }
 
@@ -1430,7 +1430,7 @@ mod tests {
     #[test]
     fn valid_layer_channels_keep_conversion_editable() {
         let file = testgen::small(Version::Psd, Compression::Raw);
-        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photocraft_raster::Interrupt::NONE, None).unwrap();
+        let (_, warnings, damaged) = psd_to_document_decoded_integrity(&file, &photostar_raster::Interrupt::NONE, None).unwrap();
         assert!(!damaged, "unexpectedly marked good PSD damaged: {warnings:?}");
     }
 
@@ -1447,30 +1447,30 @@ mod tests {
         VersionInfo { version: 1, has_real_merged_data, writer, reader, file_version: 1 }.to_bytes()
     }
 
-    /// The 1057 PhotoCraft 0.1.0 to 0.7.0 wrote: Photoshop CS6's names, NUL-terminated.
+    /// The 1057 PhotoStar 0.1.0 to 0.7.0 wrote: Photoshop CS6's names, NUL-terminated.
     fn version_info_cs6(has_real_merged_data: bool) -> Vec<u8> {
         version_info(UnicodeString::new_nul("Adobe Photoshop"), UnicodeString::new_nul("Adobe Photoshop CS6"), has_real_merged_data)
     }
 
-    /// The 1057 PhotoCraft writes since 0.8.2: Photoshop 2026's bytes, no NUL.
+    /// The 1057 PhotoStar writes since 0.8.2: Photoshop 2026's bytes, no NUL.
     fn version_info_2026(has_real_merged_data: bool) -> Vec<u8> {
-        photocraft_psd::resources::version_info_resource(has_real_merged_data).data
+        photostar_psd::resources::version_info_resource(has_real_merged_data).data
     }
 
     /// An opaque 4 × 1 RGB document with the Photoshop spot oracles' channels in their order:
     /// "Spot A", "Alpha 1" and "Spot B", each holding 100, 25, 75 and 0 % in four columns.
     fn channels_document(depth: SampleType) -> Document {
-        let mut doc = Document::with_background("old", Size::new(4, 1), ColorMode::Rgb, depth, photocraft_color::Color::rgb(1.0, 1.0, 1.0));
+        let mut doc = Document::with_background("old", Size::new(4, 1), ColorMode::Rgb, depth, photostar_color::Color::rgb(1.0, 1.0, 1.0));
         let gray = PixelFormat::new(ColorMode::Grayscale, depth, false);
         let canvas = doc.bounds();
-        let channel = |name: &str, spot: Option<(photocraft_color::Color, f32)>| {
+        let channel = |name: &str, spot: Option<(photostar_color::Color, f32)>| {
             let mut s = Surface::new(gray);
             s.write_region(canvas, &[1.0, 0.25, 0.75, 0.0]);
             AlphaChannel { spot, ..AlphaChannel::new(name, s) }
         };
-        doc.channels.push(channel("Spot A", Some((photocraft_color::Color::rgb(0.0, 0.627, 1.0), 0.0))));
+        doc.channels.push(channel("Spot A", Some((photostar_color::Color::rgb(0.0, 0.627, 1.0), 0.0))));
         doc.channels.push(channel("Alpha 1", None));
-        doc.channels.push(channel("Spot B", Some((photocraft_color::Color::rgb(1.0, 0.0, 0.627), 0.5))));
+        doc.channels.push(channel("Spot B", Some((photostar_color::Color::rgb(1.0, 0.0, 0.627), 0.5))));
         doc
     }
 
@@ -1483,10 +1483,10 @@ mod tests {
         doc.channels.iter().map(|c| c.spot.is_some()).collect()
     }
 
-    /// `doc` (opaque, 8 or 16-bit) saved the way PhotoCraft 0.1.0 to 0.16.0 saved it: spot planes
+    /// `doc` (opaque, 8 or 16-bit) saved the way PhotoStar 0.1.0 to 0.16.0 saved it: spot planes
     /// straight (the maximum = solid ink), no 1053, and `version_info` as resource 1057. `padded`
     /// lays DisplayInfo out in the 14-byte records of 0.1.0 to 0.7.0.
-    fn as_earlier_photocraft_saved(doc: &Document, version_info: Vec<u8>, padded: bool) -> Vec<u8> {
+    fn as_earlier_photostar_saved(doc: &Document, version_info: Vec<u8>, padded: bool) -> Vec<u8> {
         let mut file = crate::psd_export::document_to_psd(doc);
         assert!(!file.merged_has_alpha());
         file.resources.retain(|r| r.id != crate::channel_map::ALPHA_IDENTIFIERS);
@@ -1512,13 +1512,13 @@ mod tests {
         file.to_bytes().unwrap()
     }
 
-    /// PSDs that PhotoCraft 0.1.0 to 0.16.0 saved with spot channels store them straight. They
+    /// PSDs that PhotoStar 0.1.0 to 0.16.0 saved with spot channels store them straight. They
     /// open with the ink they had in those versions (which read every plane straight), whichever
     /// 1057 they carry. Saved again, they get Photoshop's polarity and a 1053, and reopen with the
     /// same ink. (A 0.1.0 to 0.7.0 file's padded records misread every channel's options after
     /// the first, here Spot B's kind, as those versions' successors always have; its ink is kept.)
     #[test]
-    fn spot_planes_from_earlier_photocraft_keep_their_ink() {
+    fn spot_planes_from_earlier_photostar_keep_their_ink() {
         for depth in [SampleType::U8, SampleType::U16] {
             let doc = channels_document(depth);
             let cases = [
@@ -1528,8 +1528,8 @@ mod tests {
                 ("0.1.0 to 0.7.0, 13-byte records", version_info_cs6(true), false),
             ];
             for (what, version_info, padded) in cases {
-                let bytes = as_earlier_photocraft_saved(&doc, version_info, padded);
-                assert!(earlier_photocraft_spot_planes(&PsdFile::from_bytes(&bytes).unwrap()), "{what}");
+                let bytes = as_earlier_photostar_saved(&doc, version_info, padded);
+                assert!(earlier_photostar_spot_planes(&PsdFile::from_bytes(&bytes).unwrap()), "{what}");
                 let opened = crate::import("old.psd", &bytes).unwrap().document;
                 assert_eq!(ink(&opened), ink(&doc), "{depth:?} {what}: the ink earlier versions opened");
                 assert!(spots(&opened)[0], "{depth:?} {what}");
@@ -1538,7 +1538,7 @@ mod tests {
                 }
                 let saved = crate::export(&opened, "old.psd", &crate::ExportOptions::default()).unwrap();
                 let file = PsdFile::from_bytes(&saved.bytes).unwrap();
-                assert!(file.resource(crate::channel_map::ALPHA_IDENTIFIERS).is_some() && !earlier_photocraft_spot_planes(&file), "{what}");
+                assert!(file.resource(crate::channel_map::ALPHA_IDENTIFIERS).is_some() && !earlier_photostar_spot_planes(&file), "{what}");
                 let again = crate::import("again.psd", &saved.bytes).unwrap().document;
                 assert_eq!(ink(&again), ink(&doc), "{depth:?} {what}: saved again");
                 assert_eq!(spots(&again), spots(&opened), "{depth:?} {what}: saved again");
@@ -1559,15 +1559,15 @@ mod tests {
         for solidity in [0.0, 0.02] {
             let mut doc = channels_document(SampleType::U8);
             doc.channels.swap(0, 1);
-            doc.channels[1].spot = Some((photocraft_color::Color::rgb(0.0, 0.627, 1.0), solidity));
+            doc.channels[1].spot = Some((photostar_color::Color::rgb(0.0, 0.627, 1.0), solidity));
             let names: Vec<&str> = doc.channels.iter().map(|c| c.name.as_str()).collect();
             assert_eq!(names, ["Alpha 1", "Spot A", "Spot B"]);
-            let bytes = as_earlier_photocraft_saved(&doc, version_info_cs6(true), true);
+            let bytes = as_earlier_photostar_saved(&doc, version_info_cs6(true), true);
             let file = PsdFile::from_bytes(&bytes).unwrap();
             let info = &file.resource(crate::channel_map::DISPLAY_INFO).unwrap().data;
             let misread = solidity > 0.0;
             assert_eq!(crate::channel_map::spot_flags(info, true, 0), [false, misread, false], "{solidity}: 13-byte records");
-            assert!(earlier_photocraft_spot_planes(&file), "{solidity}: found in the 14-byte records");
+            assert!(earlier_photostar_spot_planes(&file), "{solidity}: found in the 14-byte records");
             let opened = crate::import("old.psd", &bytes).unwrap().document;
             assert_eq!(ink(&opened), ink(&doc), "{solidity}: the ink 0.7.0 opened");
             assert_eq!(spots(&opened), [false, misread, false], "{solidity}: kinds as main reads them");
@@ -1578,10 +1578,10 @@ mod tests {
         }
     }
 
-    /// A file with spots and no 1053 that no earlier PhotoCraft wrote is read in Photoshop's
+    /// A file with spots and no 1053 that no earlier PhotoStar wrote is read in Photoshop's
     /// polarity (0 = solid ink). psd-tools' `cmyk-spot.psd` is one: its 1057 names psd-tools as
     /// writer and reader. So is a file with no 1057, with Photoshop CS6's names without the NUL,
-    /// or with bytes after PhotoCraft's.
+    /// or with bytes after PhotoStar's.
     #[test]
     fn other_files_without_alpha_identifiers_use_photoshop_polarity() {
         let doc = channels_document(SampleType::U8);
@@ -1591,7 +1591,7 @@ mod tests {
             ("psd-tools", Some(version_info(UnicodeString::new("psd-tools 1.10.0"), UnicodeString::new("psd-tools 1.10.0"), true))),
             ("no 1057", None),
             ("CS6 without a NUL", Some(version_info(UnicodeString::new("Adobe Photoshop"), UnicodeString::new("Adobe Photoshop CS6"), true))),
-            ("bytes after PhotoCraft's 1057", Some(trailing)),
+            ("bytes after PhotoStar's 1057", Some(trailing)),
         ];
         for (what, info) in cases {
             // Photoshop's polarity, as this version writes it, without 1053.
@@ -1599,35 +1599,35 @@ mod tests {
             file.resources.retain(|r| r.id != crate::channel_map::ALPHA_IDENTIFIERS && r.id != ids::VERSION_INFO);
             file.resources.extend(info.map(|d| ImageResource::new(ids::VERSION_INFO, d)));
             let bytes = file.to_bytes().unwrap();
-            assert!(!earlier_photocraft_spot_planes(&PsdFile::from_bytes(&bytes).unwrap()), "{what}");
+            assert!(!earlier_photostar_spot_planes(&PsdFile::from_bytes(&bytes).unwrap()), "{what}");
             let opened = crate::import("x.psd", &bytes).unwrap().document;
             assert_eq!(ink(&opened), ink(&doc), "{what}");
             assert_eq!(spots(&opened), spots(&doc), "{what}");
         }
     }
 
-    /// The rule needs a spot in DisplayInfo and no 1053, besides PhotoCraft's 1057.
+    /// The rule needs a spot in DisplayInfo and no 1053, besides PhotoStar's 1057.
     #[test]
-    fn the_earlier_photocraft_rule_needs_a_spot_and_no_alpha_identifiers() {
+    fn the_earlier_photostar_rule_needs_a_spot_and_no_alpha_identifiers() {
         let mut doc = channels_document(SampleType::U8);
-        let old = PsdFile::from_bytes(&as_earlier_photocraft_saved(&doc, version_info_2026(true), false)).unwrap();
-        assert!(earlier_photocraft_spot_planes(&old));
+        let old = PsdFile::from_bytes(&as_earlier_photostar_saved(&doc, version_info_2026(true), false)).unwrap();
+        assert!(earlier_photostar_spot_planes(&old));
         let mut with_ids = old.clone();
         with_ids.resources.push(ImageResource::new(crate::channel_map::ALPHA_IDENTIFIERS, crate::channel_map::alpha_identifiers(false, 3)));
-        assert!(!earlier_photocraft_spot_planes(&with_ids), "a 1053");
+        assert!(!earlier_photostar_spot_planes(&with_ids), "a 1053");
         let mut no_info = old.clone();
         no_info.resources.retain(|r| r.id != crate::channel_map::DISPLAY_INFO);
-        assert!(!earlier_photocraft_spot_planes(&no_info), "no DisplayInfo");
+        assert!(!earlier_photostar_spot_planes(&no_info), "no DisplayInfo");
         doc.channels.retain(|c| c.spot.is_none());
-        let alpha_only = PsdFile::from_bytes(&as_earlier_photocraft_saved(&doc, version_info_2026(true), false)).unwrap();
-        assert!(!earlier_photocraft_spot_planes(&alpha_only), "alpha channels only");
+        let alpha_only = PsdFile::from_bytes(&as_earlier_photostar_saved(&doc, version_info_2026(true), false)).unwrap();
+        assert!(!earlier_photostar_spot_planes(&alpha_only), "alpha channels only");
     }
 
-    /// `doc` as an earlier PhotoCraft saved a Photoshop file it had opened with the first `kept`
+    /// `doc` as an earlier PhotoStar saved a Photoshop file it had opened with the first `kept`
     /// of `doc`'s channels: it wrote back the Photoshop file's 1053, `stale_ids`, unchanged and
     /// those channels' planes as Photoshop stored them (it had read and written them straight),
     /// and stored the channels added after them straight.
-    fn as_earlier_photocraft_resaved(doc: &Document, stale_ids: &[u32], kept: usize) -> Vec<u8> {
+    fn as_earlier_photostar_resaved(doc: &Document, stale_ids: &[u32], kept: usize) -> Vec<u8> {
         let mut file = crate::psd_export::document_to_psd(doc);
         file.resources.retain(|r| r.id != crate::channel_map::ALPHA_IDENTIFIERS && r.id != ids::VERSION_INFO);
         file.resources.push(ImageResource::new(crate::channel_map::ALPHA_IDENTIFIERS, stale_ids.iter().flat_map(|id| id.to_be_bytes()).collect()));
@@ -1644,7 +1644,7 @@ mod tests {
         file.to_bytes().unwrap()
     }
 
-    /// An earlier PhotoCraft kept the 1053 of a Photoshop file it opened and wrote it back
+    /// An earlier PhotoStar kept the 1053 of a Photoshop file it opened and wrote it back
     /// unchanged, so a spot channel added there sits behind a 1053 that doesn't list it: a
     /// transparent Photoshop document's `[0]` (the white plate of a DTF print, added before
     /// saving), the `[0, 3]` of one with a spot channel already, or a `[0]` kept through a
@@ -1667,10 +1667,10 @@ mod tests {
             ("flattened, one spot added", flattened, vec![0], 0),
         ];
         for (what, doc, stale_ids, kept) in cases {
-            let bytes = as_earlier_photocraft_resaved(&doc, &stale_ids, kept);
+            let bytes = as_earlier_photostar_resaved(&doc, &stale_ids, kept);
             let file = PsdFile::from_bytes(&bytes).unwrap();
             assert_eq!(file.merged_has_alpha(), what.starts_with("transparent"), "{what}");
-            assert!(earlier_photocraft_spot_planes(&file), "{what}");
+            assert!(earlier_photostar_spot_planes(&file), "{what}");
             let opened = crate::import("old.psd", &bytes).unwrap().document;
             assert_eq!(ink(&opened), ink(&doc), "{what}: the ink earlier versions opened");
             assert_eq!(spots(&opened), spots(&doc), "{what}");
@@ -1681,26 +1681,26 @@ mod tests {
     }
 
     /// A 1053 that lists every extra channel, as Photoshop and this version write it, keeps the
-    /// file in Photoshop's polarity, with PhotoCraft's (Photoshop 2026's) 1057 too: a transparent
+    /// file in Photoshop's polarity, with PhotoStar's (Photoshop 2026's) 1057 too: a transparent
     /// file with a spot, and Photoshop's own `[0]` in a file without a transparency plane.
     #[test]
     fn a_complete_alpha_identifiers_resource_keeps_photoshop_polarity() {
         let mut doc = channels_document(SampleType::U8);
         doc.layers = vec![Layer::raster("Layer 1", doc.pixel_format())];
-        let bytes = as_earlier_photocraft_resaved(&doc, &[0, 3, 4, 5], 3);
+        let bytes = as_earlier_photostar_resaved(&doc, &[0, 3, 4, 5], 3);
         let file = PsdFile::from_bytes(&bytes).unwrap();
         assert!(file.merged_has_alpha());
-        assert!(!earlier_photocraft_spot_planes(&file));
+        assert!(!earlier_photostar_spot_planes(&file));
         assert_eq!(ink(&crate::import("ps.psd", &bytes).unwrap().document), ink(&doc));
         let mut opaque = channels_document(SampleType::U8);
         opaque.channels.clear();
-        let mut file = PsdFile::from_bytes(&as_earlier_photocraft_resaved(&opaque, &[0], 0)).unwrap();
+        let mut file = PsdFile::from_bytes(&as_earlier_photostar_resaved(&opaque, &[0], 0)).unwrap();
         file.resources.retain(|r| r.id != crate::channel_map::DISPLAY_INFO);
         file.resources.push(ImageResource::new(
             crate::channel_map::DISPLAY_INFO,
             crate::channel_map::display_info(&channels_document(SampleType::U8).channels.iter().collect::<Vec<_>>(), false),
         ));
         assert_eq!(photoshop_identified_channels(&file), 0, "0 is the transparency's");
-        assert!(!earlier_photocraft_spot_planes(&file), "no channel left unlisted");
+        assert!(!earlier_photostar_spot_planes(&file), "no channel left unlisted");
     }
 }

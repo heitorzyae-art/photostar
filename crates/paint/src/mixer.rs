@@ -6,12 +6,12 @@
 //! weight. The reservoir amount drains per dab unless `load` is 100 %, so low Load strokes dry out.
 //! A dry brush (`wet = 0`) paints only reservoir colour; an empty, wet brush smears canvas colour.
 
-use photocraft_raster::{Surface, from_rgba, from_rgba_into, to_rgba};
+use photostar_raster::{Surface, from_rgba, from_rgba_into, to_rgba};
 use serde::{Deserialize, Serialize};
 
 use crate::Stroke;
 use crate::retouch::{alpha_index, apply_dab_stroke, over_native};
-use photocraft_geom::Rect;
+use photostar_geom::Rect;
 
 /// Fraction of the way the pickup colour moves towards the canvas colour per dab at 100 % Wet.
 pub const PICKUP_RATE: f32 = 0.25;
@@ -152,7 +152,7 @@ pub fn apply_mixer_stroke(
 pub fn apply_mixer_dab(
     work: &mut crate::retouch::Region,
     fp: &crate::retouch::Footprint,
-    fmt: photocraft_color::PixelFormat,
+    fmt: photostar_color::PixelFormat,
     sample: Option<&Surface>,
     m: &MixerSettings,
     state: &mut MixerState,
@@ -179,7 +179,7 @@ pub fn apply_mixer_dab(
 pub fn apply_mixer_dab_region(
     work: &mut crate::retouch::Region,
     fp: &crate::retouch::Footprint,
-    fmt: photocraft_color::PixelFormat,
+    fmt: photostar_color::PixelFormat,
     sample: Option<&crate::retouch::Region>,
     m: &MixerSettings,
     state: &mut MixerState,
@@ -280,7 +280,7 @@ pub fn apply_mixer_dab_region(
 mod tests {
     use super::*;
     use crate::{BrushSettings, StrokePoint};
-    use photocraft_color::PixelFormat;
+    use photostar_color::PixelFormat;
 
     fn stroke(y: f64) -> Stroke {
         Stroke {

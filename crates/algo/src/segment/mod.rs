@@ -34,8 +34,8 @@ pub mod sky;
 pub mod slic;
 pub mod subject;
 
-use photocraft_geom::Rect;
-use photocraft_raster::{Cancelled, Interrupt, Surface};
+use photostar_geom::Rect;
+use photostar_raster::{Cancelled, Interrupt, Surface};
 
 pub use crate::selection::Region;
 use gmm::Gmm;

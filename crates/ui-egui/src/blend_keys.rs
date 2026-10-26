@@ -7,10 +7,10 @@
 //! (`tools.setBrush`, `layer.setProps` with every target layer), so it is one undo step.
 
 use egui::{Event, Key};
-use photocraft_color::BlendMode;
+use photostar_color::BlendMode;
 use serde_json::json;
 
-use crate::PhotocraftApp;
+use crate::PhotostarApp;
 use crate::state::Tool;
 
 /// The mode `step` places after (or before, when negative) `current` in `modes`, wrapping around.
@@ -80,7 +80,7 @@ enum Press {
 /// Consumes this frame's ⇧+ / ⇧− presses (⇧= on a US layout is `+`; on a German one
 /// `layout_keys::apply` has already turned ⇧+ and ⇧- into `+` and `-`) and ⇧⌥ letters, and
 /// applies them. Runs before the tool letters, which would otherwise take ⇧⌥M as M.
-pub fn handle(app: &mut PhotocraftApp, ctx: &egui::Context) {
+pub fn handle(app: &mut PhotostarApp, ctx: &egui::Context) {
     let presses: Vec<Press> = ctx.input_mut(|i| {
         let mut out = Vec::new();
         i.events.retain(|e| match e {
@@ -167,7 +167,7 @@ fn target(tool: Tool) -> Target {
 }
 
 /// The active tool's mode, `None` being Clear. A brush-based tool's lives in its own brush.
-pub fn tool_mode(app: &mut PhotocraftApp) -> Option<BlendMode> {
+pub fn tool_mode(app: &mut PhotostarApp) -> Option<BlendMode> {
     let o = &app.ui.tool_options;
     match app.ui.tool {
         Tool::Brush if o.brush_clear => None,
@@ -183,7 +183,7 @@ pub fn tool_mode(app: &mut PhotocraftApp) -> Option<BlendMode> {
 }
 
 /// Sets the active tool's mode; `None` is Clear.
-fn set_tool_mode(app: &mut PhotocraftApp, mode: Option<BlendMode>) {
+fn set_tool_mode(app: &mut PhotostarApp, mode: Option<BlendMode>) {
     match app.ui.tool {
         Tool::Gradient => {
             if let Some(m) = mode {
@@ -210,7 +210,7 @@ fn set_tool_mode(app: &mut PhotocraftApp, mode: Option<BlendMode>) {
     }
 }
 
-fn set_gradient_mode(app: &mut PhotocraftApp, mode: BlendMode) {
+fn set_gradient_mode(app: &mut PhotostarApp, mode: BlendMode) {
     let before = app.ui.tool_options.clone();
     app.ui.tool_options.gradient_blend_mode = mode;
     // Live mode: a selected gradient fill layer follows, as with the dropdown.
@@ -219,7 +219,7 @@ fn set_gradient_mode(app: &mut PhotocraftApp, mode: BlendMode) {
 
 /// Sets `mode` on every selected layer that can take it, in one undo step: the locked Background
 /// has no blend mode, and only groups pass through.
-fn set_layers_mode(app: &mut PhotocraftApp, mode: BlendMode) {
+fn set_layers_mode(app: &mut PhotostarApp, mode: BlendMode) {
     let Some(st) = app.session.active() else { return };
     let ids: Vec<u64> = st
         .selected_layers()
@@ -235,7 +235,7 @@ fn set_layers_mode(app: &mut PhotocraftApp, mode: BlendMode) {
 
 /// One ⇧+ (`step` 1) or ⇧− (`step` -1) press. Selected layers all take the mode after the active
 /// layer's.
-pub fn press(app: &mut PhotocraftApp, step: i32) {
+pub fn press(app: &mut PhotostarApp, step: i32) {
     match target(app.ui.tool) {
         Target::Tool(modes) => {
             let current = tool_mode(app);
@@ -261,7 +261,7 @@ pub fn press(app: &mut PhotocraftApp, step: i32) {
 
 /// One ⇧⌥ letter press. A mode the target's menu doesn't have (Clear or Behind for layers, Pass
 /// Through for a painting tool, Overlay for the Healing Brush) does nothing.
-pub fn pick_mode(app: &mut PhotocraftApp, pick: Pick) {
+pub fn pick_mode(app: &mut PhotostarApp, pick: Pick) {
     let want = match pick {
         Pick::Mode(m) => Some(m),
         Pick::Clear => None,
@@ -282,21 +282,21 @@ pub fn pick_mode(app: &mut PhotocraftApp, pick: Pick) {
 mod tests {
     use super::*;
 
-    fn app(tool: Tool) -> PhotocraftApp {
-        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+    fn app(tool: Tool) -> PhotostarApp {
+        let mut app = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
         app.run("file.new", json!({"width": 32, "height": 32})).unwrap();
         app.run("layer.new.layer", json!({})).unwrap();
         app.ui.tool = tool;
         app
     }
 
-    fn layer_blend(app: &PhotocraftApp) -> BlendMode {
+    fn layer_blend(app: &PhotostarApp) -> BlendMode {
         let st = app.session.active().unwrap();
         st.doc.layer(st.active_layer.unwrap()).unwrap().blend
     }
 
     /// Feeds one key press with `modifiers` through the app's shortcut handling.
-    fn key(app: &mut PhotocraftApp, ctx: &egui::Context, key: Key, modifiers: egui::Modifiers) {
+    fn key(app: &mut PhotostarApp, ctx: &egui::Context, key: Key, modifiers: egui::Modifiers) {
         let raw = egui::RawInput {
             events: vec![egui::Event::ModifiersChanged(modifiers), egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers }],
             ..Default::default()
@@ -315,7 +315,7 @@ mod tests {
         let mut a = app(Tool::Brush);
         a.session.tools.brush.hardness = 0.5;
         let shift = egui::Modifiers::SHIFT;
-        let typed = |a: &mut PhotocraftApp, key: Key, physical_key: Key, text: &str| {
+        let typed = |a: &mut PhotostarApp, key: Key, physical_key: Key, text: &str| {
             let press = egui::Event::Key { key, physical_key: Some(physical_key), pressed: true, repeat: false, modifiers: shift };
             let raw = egui::RawInput { events: vec![egui::Event::ModifiersChanged(shift), press, egui::Event::Text(text.into())], ..Default::default() };
             ctx.begin_pass(raw);
@@ -370,12 +370,12 @@ mod tests {
         a.run("layer.select", json!({"layer": bg.0})).unwrap();
         key(&mut a, &ctx, Key::Plus, egui::Modifiers::SHIFT);
         assert_eq!(a.session.active().unwrap().doc.layers[0].blend, BlendMode::Normal);
-        let mut none = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+        let mut none = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
         press(&mut none, 1);
     }
 
     /// Feeds one ⇧⌥ press of `key`, reported by the platform as `physical` too.
-    fn alt_shift(app: &mut PhotocraftApp, ctx: &egui::Context, key: Key, physical: Key) {
+    fn alt_shift(app: &mut PhotostarApp, ctx: &egui::Context, key: Key, physical: Key) {
         let m = egui::Modifiers::SHIFT | egui::Modifiers::ALT;
         let raw = egui::RawInput {
             events: vec![egui::Event::ModifiersChanged(m), egui::Event::Key { key, physical_key: Some(physical), pressed: true, repeat: false, modifiers: m }],
@@ -386,7 +386,7 @@ mod tests {
         ctx.end_pass().textures_delta.clear();
     }
 
-    fn blend_of(app: &PhotocraftApp, i: usize) -> BlendMode {
+    fn blend_of(app: &PhotostarApp, i: usize) -> BlendMode {
         app.session.active().unwrap().doc.layers[i].blend
     }
 
@@ -523,7 +523,7 @@ mod tests {
         alt_shift(&mut a, &ctx, Key::M, Key::M);
         assert_eq!(layer_blend(&a), BlendMode::Normal);
         assert_eq!(a.ui.tool, Tool::Smudge);
-        let mut none = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+        let mut none = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
         pick_mode(&mut none, Pick::Mode(BlendMode::Multiply));
     }
 
@@ -543,7 +543,7 @@ mod tests {
         crate::transform_tool::begin(&mut a, &ctx).unwrap();
         crate::transform_tool::nudge(&mut a, 3.0, 0.0);
         let shift_alt = egui::Modifiers::SHIFT | egui::Modifiers::ALT;
-        let opacity = |a: &PhotocraftApp| {
+        let opacity = |a: &PhotostarApp| {
             let st = a.session.active().unwrap();
             st.doc.layer(st.active_layer.unwrap()).unwrap().opacity
         };
@@ -623,7 +623,7 @@ mod tests {
         assert_eq!(tool_mode(&mut a), Some(BlendMode::Multiply), "the Brush keeps its own mode");
     }
 
-    fn key_press(a: &mut PhotocraftApp, ctx: &egui::Context, step: i32) {
+    fn key_press(a: &mut PhotostarApp, ctx: &egui::Context, step: i32) {
         key(a, ctx, if step > 0 { Key::Plus } else { Key::Minus }, egui::Modifiers::SHIFT);
     }
 

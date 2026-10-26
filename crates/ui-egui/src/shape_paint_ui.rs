@@ -7,14 +7,14 @@ use serde_json::{Value, json};
 use crate::shape_gradient_ui::{self as shape_gradient, GradientChoices};
 use crate::theme::Tokens;
 
-pub(crate) fn color_of(f: &photocraft_doc::Fill) -> Option<[f32; 4]> {
+pub(crate) fn color_of(f: &photostar_doc::Fill) -> Option<[f32; 4]> {
     match f {
-        photocraft_doc::Fill::Solid(c) => Some(rgba_of(c)),
+        photostar_doc::Fill::Solid(c) => Some(rgba_of(c)),
         _ => None,
     }
 }
 
-pub(crate) fn rgba_of(c: &photocraft_doc::Color) -> [f32; 4] {
+pub(crate) fn rgba_of(c: &photostar_doc::Color) -> [f32; 4] {
     let [r, g, b] = c.to_rgb();
     [r, g, b, c.alpha]
 }
@@ -23,9 +23,9 @@ pub(crate) fn rgba_of(c: &photocraft_doc::Color) -> [f32; 4] {
 /// gradient's stops as stored colours (a CMYK or Lab stop keeps its model) and every gradient
 /// field, so a swatch edit (angle, style…) keeps the rest of the gradient. The swatches never
 /// hand it a pattern (they don't offer one).
-pub(crate) fn paint_param(f: &photocraft_doc::Fill) -> Value {
+pub(crate) fn paint_param(f: &photostar_doc::Fill) -> Value {
     match f {
-        photocraft_doc::Fill::Gradient { stops, angle, scale, style, reverse, opacity_stops, midpoints, offset, dither, align } => json!({"gradient": {
+        photostar_doc::Fill::Gradient { stops, angle, scale, style, reverse, opacity_stops, midpoints, offset, dither, align } => json!({"gradient": {
             "stops": stops.iter().map(|(t, c)| json!([t, c])).collect::<Vec<_>>(),
             "angle": angle, "scale": scale * 100.0, "style": format!("{style:?}").to_ascii_lowercase(), "reverse": reverse,
             "opacityStops": opacity_stops, "midpoints": midpoints, "offset": [offset.0, offset.1], "dither": dither, "align": align,
@@ -38,7 +38,7 @@ pub(crate) fn paint_param(f: &photocraft_doc::Fill) -> Value {
 pub(crate) enum PaintChange {
     Color([f32; 4]),
     /// A `Fill::Gradient` (the swatch's Gradient tab).
-    Gradient(photocraft_doc::Fill),
+    Gradient(photostar_doc::Fill),
     None,
 }
 
@@ -63,7 +63,7 @@ pub(crate) fn picker_rgba(hsva: egui::ecolor::Hsva) -> [f32; 4] {
 /// data: opening the picker must never quantize an existing high-depth colour or enable paint.
 pub(crate) fn swatch(
     ui: &mut egui::Ui,
-    fill: Option<&photocraft_doc::Fill>,
+    fill: Option<&photostar_doc::Fill>,
     fallback: [f32; 4],
     tip: &str,
     gradients: &mut GradientChoices,
@@ -77,9 +77,9 @@ pub(crate) fn swatch(
         (Some(c), _) => {
             ui.painter().rect_filled(r.shrink(1.0), t.radius_sm, rgba32(c));
         }
-        (None, Some(photocraft_doc::Fill::Gradient { stops, .. })) if !stops.is_empty() => {
+        (None, Some(photostar_doc::Fill::Gradient { stops, .. })) if !stops.is_empty() => {
             // Gradient fills preview as a left-to-right ramp through their stops.
-            let rgb = |c: &photocraft_doc::Color| {
+            let rgb = |c: &photostar_doc::Color| {
                 let v = c.to_rgba8();
                 Color32::from_rgba_unmultiplied(v[0], v[1], v[2], v[3])
             };
@@ -126,7 +126,7 @@ pub(crate) fn swatch(
     if let Some(PaintChange::Color(color)) = out {
         hsva = picker_color(color);
     }
-    let gradient = fill.filter(|f| matches!(f, photocraft_doc::Fill::Gradient { .. }));
+    let gradient = fill.filter(|f| matches!(f, photostar_doc::Fill::Gradient { .. }));
     let popup_id = resp.id;
     let shown = crate::widgets::swatch_popup(&resp).show(|ui| {
         ui.horizontal(|ui| {

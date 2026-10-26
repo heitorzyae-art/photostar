@@ -7,13 +7,13 @@ use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use serde_json::json;
 
-use crate::PhotocraftApp;
+use crate::PhotostarApp;
 use crate::state::Tool;
 
-fn harness() -> Harness<'static, PhotocraftApp> {
+fn harness() -> Harness<'static, PhotostarApp> {
     let mut h = Harness::builder().with_size(vec2(1440.0, 900.0)).with_max_steps(64).build_eframe(move |cc| {
-        PhotocraftApp::setup_context(&cc.egui_ctx, Default::default());
-        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
+        PhotostarApp::setup_context(&cc.egui_ctx, Default::default());
+        let mut app = PhotostarApp::new(photostar_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({"width": 64, "height": 48})).unwrap();
         app.ui.tool = Tool::Brush;
         app
@@ -23,11 +23,11 @@ fn harness() -> Harness<'static, PhotocraftApp> {
 }
 
 /// The value field showing `value`: the options bar's Smoothing is the brush's only one at 10.
-fn field<'a>(h: &'a Harness<'_, PhotocraftApp>, value: &str) -> egui_kittest::Node<'a> {
+fn field<'a>(h: &'a Harness<'_, PhotostarApp>, value: &str) -> egui_kittest::Node<'a> {
     h.query_all_by_role(Role::SpinButton).find(|n| n.value().as_deref() == Some(value)).unwrap()
 }
 
-fn wheel(h: &mut Harness<'_, PhotocraftApp>, at: egui::Pos2, lines: f32, modifiers: egui::Modifiers) {
+fn wheel(h: &mut Harness<'_, PhotostarApp>, at: egui::Pos2, lines: f32, modifiers: egui::Modifiers) {
     h.hover_at(at);
     h.run_steps(1);
     h.event(egui::Event::MouseWheel {
@@ -41,7 +41,7 @@ fn wheel(h: &mut Harness<'_, PhotocraftApp>, at: egui::Pos2, lines: f32, modifie
 }
 
 /// (zoom, centre) of the document's view.
-fn view(h: &Harness<'_, PhotocraftApp>) -> (f32, [f32; 2]) {
+fn view(h: &Harness<'_, PhotostarApp>) -> (f32, [f32; 2]) {
     let v = &h.state().ui.views[0];
     (v.zoom, v.center)
 }

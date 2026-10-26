@@ -4,7 +4,7 @@ use super::*;
 fn reference(
     work: &mut crate::retouch::Region,
     fp: &crate::retouch::Footprint,
-    fmt: photocraft_color::PixelFormat,
+    fmt: photostar_color::PixelFormat,
     sample: Option<&Surface>,
     m: &MixerSettings,
     state: &mut MixerState,
@@ -111,7 +111,7 @@ fn reference(
 fn contiguous_mixer_matches_frozen_kernel_across_models_depths_and_spatial_loads() {
     use crate::retouch::Region;
     use crate::{BrushContext, BrushSettings, Stroke, StrokePoint};
-    use photocraft_color::{ColorMode, PixelFormat, SampleType};
+    use photostar_color::{ColorMode, PixelFormat, SampleType};
     let rect = Rect::new(-16, -16, 32, 32);
     for mode in [ColorMode::Rgb, ColorMode::Grayscale, ColorMode::Cmyk, ColorMode::Lab] {
         for depth in [SampleType::U8, SampleType::U16, SampleType::F32] {

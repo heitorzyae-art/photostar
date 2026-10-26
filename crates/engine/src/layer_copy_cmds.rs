@@ -10,9 +10,9 @@
 
 use std::collections::{HashMap, HashSet};
 
-use photocraft_color::ColorMode;
-use photocraft_doc::{Document, Layer, LayerContent, LayerId, SmartContentsId};
-use photocraft_geom::Rect;
+use photostar_color::ColorMode;
+use photostar_doc::{Document, Layer, LayerContent, LayerId, SmartContentsId};
+use photostar_geom::Rect;
 use serde_json::{Value, json};
 
 use crate::commands::CommandSpec;

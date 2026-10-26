@@ -1,5 +1,5 @@
 [package]
-name = "photocraft-paint"
+name = "photostar-paint"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +8,9 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-photocraft-geom = { workspace = true }
-photocraft-color = { workspace = true }
-photocraft-raster = { workspace = true }
+photostar-geom = { workspace = true }
+photostar-color = { workspace = true }
+photostar-raster = { workspace = true }
 serde = { workspace = true }
 
 # Large tips rasterize, accumulate and composite in parallel (the same pixels as serially).
@@ -18,5 +18,5 @@ serde = { workspace = true }
 rayon = { workspace = true }
 
 [dev-dependencies]
-photocraft-cms = { workspace = true }
+photostar-cms = { workspace = true }
 serde_json = { workspace = true }

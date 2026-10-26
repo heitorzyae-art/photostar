@@ -8,12 +8,12 @@
 //! appended at the lowest priority to every family, so Latin text keeps Inter.
 //!
 //! Other scripts the bundled fonts lack (Thai, Arabic, Hebrew, Devanagari and the other Indic
-//! scripts, ...: [`photocraft_text::scripts`]) work the same way, each with its own attempt state,
+//! scripts, ...: [`photostar_text::scripts`]) work the same way, each with its own attempt state,
 //! independent of the CJK order: the first installed candidate file whose character map really
 //! has the missing character is registered, once per script. egui shapes each font run with
 //! HarfRust, so Thai marks and Arabic joining come from the font; it has no bidi reordering yet.
 //!
-//! Script order follows the effective UI locale ([`photocraft_text::cjk::script_order`]): Kana
+//! Script order follows the effective UI locale ([`photostar_text::cjk::script_order`]): Kana
 //! prefers a Japanese font, Hangul a Korean one, Bopomofo a Traditional Chinese one, and Han the
 //! locale's script. The effective locale is the translated UI language when it names
 //! ja/ko/zh-Hans/zh-Hant; otherwise it is the OS locale. An English UI on a Japanese, Korean or
@@ -28,7 +28,7 @@
 //! script has been tried the scan stops.
 //!
 //! Builds made with the optional craft-fonts input (`CRAFT_FONTS_DIR`,
-//! [`photocraft_text::craft_fonts`]) carry Japanese, Chinese, Korean and other faces. A
+//! [`photostar_text::craft_fonts`]) carry Japanese, Chinese, Korean and other faces. A
 //! per-character [`FontProvider`] serves them, and the system font a locale defers to, in the
 //! first frame; the lazy loader remains the later fallback. The provider has no lifetime read
 //! cap. It retains at most [`MAX_SYSTEM_CACHE_BYTES`] of unique font-file blobs, charging a
@@ -39,9 +39,9 @@
 
 use egui::epaint::text::{FontInsert, FontPriority, InsertFontFamily};
 use egui::{FallbackRequest, FontData, FontFamily, FontId, FontProvider, Shape};
-use photocraft_text::cjk::{self, CjkChar, CjkScript, FontFile};
-use photocraft_text::craft_fonts::{self, CraftFont};
-use photocraft_text::scripts::{self, Script};
+use photostar_text::cjk::{self, CjkChar, CjkScript, FontFile};
+use photostar_text::craft_fonts::{self, CraftFont};
+use photostar_text::scripts::{self, Script};
 use std::path::PathBuf;
 
 /// Skip absurdly large files (a corrupt or non-font path must not eat memory).
@@ -523,7 +523,7 @@ fn craft_faces(iso: &str) -> Vec<(usize, &'static CraftFont)> {
 /// Baseline and variable-weight tweaks shared by craft and system fallbacks.
 fn apply_font_tweaks(data: &mut FontData) {
     let offset = vertical_metrics(data.bytes(), data.index)
-        .zip(vertical_metrics(photocraft_text::fonts::INTER_REGULAR.as_slice(), 0))
+        .zip(vertical_metrics(photostar_text::fonts::INTER_REGULAR.as_slice(), 0))
         .map(|(face, primary)| baseline_offset(face, primary));
     let weight = regular_weight(data.bytes(), data.index);
     if let Some(offset) = offset {
@@ -552,7 +552,7 @@ fn craft_insert(index: usize, face: &'static CraftFont, scale: f32) -> FontInser
 }
 
 fn craft_provider_id() -> egui::Id {
-    egui::Id::unique("photocraft-craft-font-provider")
+    egui::Id::unique("photostar-craft-font-provider")
 }
 
 /// The effective locale for CJK choice: an explicitly translated UI language
@@ -944,7 +944,7 @@ pub struct CjkFontPlugin(pub CjkFallback);
 
 impl egui::Plugin for CjkFontPlugin {
     fn debug_name(&self) -> &'static str {
-        "photocraft-cjk-fonts"
+        "photostar-cjk-fonts"
     }
 
     fn output_hook(&mut self, ctx: &egui::Context, output: &mut egui::FullOutput) {
@@ -1021,13 +1021,13 @@ mod tests {
 
     #[test]
     fn lazy_fallbacks_follow_ui_font_size_and_survive_size_changes() {
-        use photocraft_engine::prefs::UiFontSize;
+        use photostar_engine::prefs::UiFontSize;
         let ctx = egui::Context::default();
         crate::theme::install_fonts(&ctx);
         ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
         crate::theme::set_ui_font_size(&ctx, UiFontSize::Large);
         let name = "test-lazy-fallback".to_string();
-        add_to_all_families(&ctx, name.clone(), FontData::from_static(photocraft_text::fonts::INTER_REGULAR.as_slice()));
+        add_to_all_families(&ctx, name.clone(), FontData::from_static(photostar_text::fonts::INTER_REGULAR.as_slice()));
         for (size, scale) in [(UiFontSize::Large, 16.0 / 12.0), (UiFontSize::Tiny, 10.0 / 12.0), (UiFontSize::Small, 1.0)] {
             crate::theme::set_ui_font_size(&ctx, size);
             for _ in 0..2 {
@@ -1051,7 +1051,7 @@ mod tests {
     /// with the old stack.
     #[test]
     fn discovered_faces_use_the_scale_of_the_definitions_they_were_laid_out_with() {
-        use photocraft_engine::prefs::UiFontSize;
+        use photostar_engine::prefs::UiFontSize;
         fn thai_reader(_: &std::path::Path) -> Option<Vec<u8>> {
             Some(synthetic_font(&[(0x0E01, 0x0E5B)]))
         }
@@ -1175,7 +1175,7 @@ mod tests {
         assert_eq!(regular_weight(&fvar_font(&[(b"wght", 500.0, 600.0, 900.0)], false), 0), Some(500.0), "Regular clamped into the axis");
         assert_eq!(regular_weight(&fvar_font(&[(b"wght", 100.0, 400.0, 900.0)], false), 0), None, "already Regular");
         assert_eq!(regular_weight(&fvar_font(&[(b"wdth", 75.0, 100.0, 100.0)], false), 0), None, "no weight axis");
-        assert_eq!(regular_weight(photocraft_text::fonts::INTER_REGULAR.as_slice(), 0), None, "static font");
+        assert_eq!(regular_weight(photostar_text::fonts::INTER_REGULAR.as_slice(), 0), None, "static font");
         for bad in [&thin[..thin.len() - 9], &thin[..30], &b"ttcf"[..], &[][..]] {
             assert_eq!(regular_weight(bad, 1), None);
         }
@@ -1183,7 +1183,7 @@ mod tests {
         let ctx = egui::Context::default();
         crate::theme::install_fonts(&ctx);
         ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
-        add_to_all_families(&ctx, "test-static".into(), FontData::from_static(photocraft_text::fonts::INTER_REGULAR.as_slice()));
+        add_to_all_families(&ctx, "test-static".into(), FontData::from_static(photostar_text::fonts::INTER_REGULAR.as_slice()));
         ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
         let fonts = ctx.fonts(|f| f.definitions().clone());
         assert_eq!(fonts.font_data.get("test-static").map(|d| d.tweak.coords.clone()), Some(Default::default()));
@@ -1226,7 +1226,7 @@ mod tests {
     fn fake_dir() -> PathBuf {
         let mut g = DIR.lock().unwrap();
         g.get_or_insert_with(|| {
-            let dir = std::env::temp_dir().join(format!("photocraft-cjk-{}", std::process::id()));
+            let dir = std::env::temp_dir().join(format!("photostar-cjk-{}", std::process::id()));
             std::fs::create_dir_all(&dir).unwrap();
             std::fs::write(dir.join("font.ttf"), include_bytes!("../../../assets/fonts/Inter-Regular.ttf")).unwrap();
             std::fs::write(dir.join("empty.ttf"), b"").unwrap();
@@ -1884,7 +1884,7 @@ mod tests {
         static FILE: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new();
         let face = craft_fonts::CRAFT_FONTS.iter().find(|f| f.family == "Noto Sans CJK SC" && !f.bytes.is_empty())?;
         FILE.get_or_init(|| {
-            let path = std::env::temp_dir().join(format!("photocraft-hant-{}.otf", std::process::id()));
+            let path = std::env::temp_dir().join(format!("photostar-hant-{}.otf", std::process::id()));
             std::fs::write(&path, face.bytes).ok().map(|()| path)
         })
         .clone()

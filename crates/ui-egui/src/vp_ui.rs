@@ -17,15 +17,15 @@
 use std::sync::Arc;
 
 use egui::{Color32, Pos2, Stroke, TextureHandle, pos2};
-use photocraft_algo::transform::Homography;
-use photocraft_algo::vanishing::{Edge, PlaneCheck, Scene, VpPlane, clone_dabs_from, clone_source};
-use photocraft_doc::{DocId, Document, Layer, LayerContent, LayerId};
-use photocraft_engine::vp_cmds::{CloneSpec, MAX_CLONE_DABS, MAX_CLONE_STROKES, VP, copy_changed, over, paste_onto, visible_image};
-use photocraft_geom::Rect;
-use photocraft_raster::Surface;
+use photostar_algo::transform::Homography;
+use photostar_algo::vanishing::{Edge, PlaneCheck, Scene, VpPlane, clone_dabs_from, clone_source};
+use photostar_doc::{DocId, Document, Layer, LayerContent, LayerId};
+use photostar_engine::vp_cmds::{CloneSpec, MAX_CLONE_DABS, MAX_CLONE_STROKES, VP, copy_changed, over, paste_onto, visible_image};
+use photostar_geom::Rect;
+use photostar_raster::Surface;
 use serde_json::{Value, json};
 
-use crate::PhotocraftApp;
+use crate::PhotostarApp;
 use crate::canvas::{ToolEvent, ViewXform};
 use crate::edit_history::{EditHistory, Step};
 
@@ -783,7 +783,7 @@ fn slid_quad(h: &Homography, u0: f64, v0: f64, u1: f64, v1: f64) -> Option<[[f64
 }
 
 /// Starts Vanishing Point on the active pixel layer.
-pub fn begin(app: &mut PhotocraftApp, ctx: &egui::Context) -> Result<(), String> {
+pub fn begin(app: &mut PhotostarApp, ctx: &egui::Context) -> Result<(), String> {
     if app.ui.transform.is_some() {
         return Err("finish Free Transform first".into());
     }
@@ -847,7 +847,7 @@ pub fn begin(app: &mut PhotocraftApp, ctx: &egui::Context) -> Result<(), String>
 
 /// OK: runs `filter.vanishingPoint` with the planes (and the paste and the clone strokes). An
 /// invalid plane keeps the mode open; with nothing to paste or clone the mode just closes.
-pub fn commit(app: &mut PhotocraftApp) -> Result<Value, String> {
+pub fn commit(app: &mut PhotostarApp) -> Result<Value, String> {
     let Some(s) = app.distort.vanishing.as_ref() else { return Ok(Value::Null) };
     let center = s.center();
     if s.planes.iter().any(|p| p.check(center) == PlaneCheck::Invalid) {
@@ -879,7 +879,7 @@ pub fn commit(app: &mut PhotocraftApp) -> Result<Value, String> {
 }
 
 /// Control channel: `filter.vanishingPoint {"ui": {...}}` while the mode is active.
-pub fn control(app: &mut PhotocraftApp, ui: &Value) -> Result<Value, String> {
+pub fn control(app: &mut PhotostarApp, ui: &Value) -> Result<Value, String> {
     if ui.get("commit").and_then(Value::as_bool) == Some(true) {
         return commit(app);
     }
@@ -922,7 +922,7 @@ pub fn control(app: &mut PhotocraftApp, ui: &Value) -> Result<Value, String> {
         s.aligned_ref = None;
     }
     if let Some(c) = ui.get("clone") {
-        s.strokes = photocraft_engine::vp_cmds::clone_specs(&json!({"clone": c})).map_err(|e| e.to_string())?;
+        s.strokes = photostar_engine::vp_cmds::clone_specs(&json!({"clone": c})).map_err(|e| e.to_string())?;
         s.drag = None;
         s.rev += 1;
     }
@@ -997,7 +997,7 @@ fn parse_planes(v: &Value) -> Result<(Vec<VpPlane>, Vec<Option<Torn>>), String> 
 
 /// Brings the stamp preview up to date with the strokes (and repaints it after the planes
 /// changed, once no plane is being dragged).
-pub(crate) fn sync_preview(app: &mut PhotocraftApp) {
+pub(crate) fn sync_preview(app: &mut PhotostarApp) {
     let Some(s) = app.distort.vanishing.as_mut() else { return };
     if let Some(st) = app.session.active() {
         s.rebase(&st.doc, st.revision);
@@ -1011,7 +1011,7 @@ pub(crate) fn sync_preview(app: &mut PhotocraftApp) {
 
 /// What changed between stamp preview (or document) key `seen` and `now` of document `doc` at
 /// `revision`: the areas the strokes painted. `None` when either key isn't the session's.
-pub(crate) fn damage(app: &PhotocraftApp, doc: DocId, revision: u64, seen: u64, now: u64) -> Option<Rect> {
+pub(crate) fn damage(app: &PhotostarApp, doc: DocId, revision: u64, seen: u64, now: u64) -> Option<Rect> {
     let s = app.distort.vanishing.as_ref().filter(|s| s.base.id == doc && s.doc_revision == revision)?;
     let keys = &s.preview.as_ref()?.keys;
     let at = |k: u64| if k == 0 { Some(0) } else { keys.iter().position(|e| PREVIEW_KEY + e.0 == k).map(|i| i + 1) };
@@ -1022,7 +1022,7 @@ pub(crate) fn damage(app: &PhotocraftApp, doc: DocId, revision: u64, seen: u64, 
     Some(keys.get(a.min(b)..a.max(b))?.iter().fold(Rect::EMPTY, |r, k| union(r, k.1)))
 }
 
-pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) {
+pub fn pointer(app: &mut PhotostarApp, ev: ToolEvent, mods: egui::Modifiers) {
     let tol = crate::distort_ui::tolerance(app);
     let Some(s) = app.distort.vanishing.as_mut() else { return };
     match ev {
@@ -1042,7 +1042,7 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) {
 }
 
 /// Keys while the mode is active (↩ and Esc are handled by `distort_ui::keys`).
-pub fn keys(app: &mut PhotocraftApp, ctx: &egui::Context) {
+pub fn keys(app: &mut PhotostarApp, ctx: &egui::Context) {
     use egui::{Key, Modifiers};
     if ctx.memory(|m| m.focused().is_some()) {
         return;
@@ -1065,7 +1065,7 @@ pub fn keys(app: &mut PhotocraftApp, ctx: &egui::Context) {
 }
 
 /// Esc: drops a half-clicked plane first, then leaves the mode.
-pub fn escape(app: &mut PhotocraftApp) {
+pub fn escape(app: &mut PhotostarApp) {
     match app.distort.vanishing.as_mut() {
         Some(s) if !s.pending.is_empty() => s.pending.clear(),
         _ => app.distort.vanishing = None,
@@ -1227,7 +1227,7 @@ fn draw_paste(painter: &egui::Painter, scr: &dyn Fn([f64; 2]) -> Pos2, h: &Homog
     painter.add(mesh);
 }
 
-pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+pub fn options_bar(app: &mut PhotostarApp, ui: &mut egui::Ui) {
     // New Layer toggled last frame repaints the stamp preview.
     sync_preview(app);
     let Some(s) = app.distort.vanishing.as_mut() else { return };
@@ -1299,9 +1299,9 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
 mod tests {
     use super::*;
 
-    fn app_with_layer() -> (egui::Context, PhotocraftApp) {
+    fn app_with_layer() -> (egui::Context, PhotostarApp) {
         let ctx = egui::Context::default();
-        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+        let mut app = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
         app.session.execute("file.new", json!({"width": 240, "height": 160, "depth": 16})).unwrap();
         app.session.execute("layer.new.layer", json!({})).unwrap();
         app.session.execute("edit.fill", json!({"color": "#4080c0"})).unwrap();
@@ -1318,7 +1318,7 @@ mod tests {
         app.session.execute("edit.copy", json!({})).unwrap();
         app.session.execute("select.deselect", json!({})).unwrap();
         crate::distort_ui::menu(&mut app, &ctx, VP, &json!({})).unwrap().unwrap();
-        let click = |app: &mut PhotocraftApp, x: f64, y: f64| {
+        let click = |app: &mut PhotostarApp, x: f64, y: f64| {
             crate::distort_ui::pointer(app, ToolEvent::Down { x, y, pressure: 1.0 }, egui::Modifiers::NONE);
             crate::distort_ui::pointer(app, ToolEvent::Up { x, y }, egui::Modifiers::NONE);
         };
@@ -1360,13 +1360,13 @@ mod tests {
         app.session.execute("select.deselect", json!({})).unwrap();
         crate::distort_ui::menu(&mut app, &ctx, VP, &json!({})).unwrap().unwrap();
         control(&mut app, &json!({"planes": [{"corners": [[70, 60], [170, 60], [220, 150], [20, 150]]}]})).unwrap();
-        let ev = |app: &mut PhotocraftApp, e: ToolEvent, m: egui::Modifiers| crate::distort_ui::pointer(app, e, m);
-        let drag = |app: &mut PhotocraftApp, a: [f64; 2], b: [f64; 2], m: egui::Modifiers| {
+        let ev = |app: &mut PhotostarApp, e: ToolEvent, m: egui::Modifiers| crate::distort_ui::pointer(app, e, m);
+        let drag = |app: &mut PhotostarApp, a: [f64; 2], b: [f64; 2], m: egui::Modifiers| {
             ev(app, ToolEvent::Down { x: a[0], y: a[1], pressure: 1.0 }, m);
             ev(app, ToolEvent::Move { x: (a[0] + b[0]) / 2.0, y: (a[1] + b[1]) / 2.0, pressure: 1.0 }, m);
             ev(app, ToolEvent::Up { x: b[0], y: b[1] }, m);
         };
-        fn vp(app: &PhotocraftApp) -> &VpSession {
+        fn vp(app: &PhotostarApp) -> &VpSession {
             app.distort.vanishing.as_ref().unwrap()
         }
 
@@ -1422,12 +1422,12 @@ mod tests {
         let (ctx, mut app) = app_with_layer();
         crate::distort_ui::menu(&mut app, &ctx, VP, &json!({})).unwrap().unwrap();
         control(&mut app, &json!({"planes": [{"corners": [[70, 60], [170, 60], [220, 150], [20, 150]]}]})).unwrap();
-        let drag = |app: &mut PhotocraftApp, a: [f64; 2], b: [f64; 2], m: egui::Modifiers| {
+        let drag = |app: &mut PhotostarApp, a: [f64; 2], b: [f64; 2], m: egui::Modifiers| {
             crate::distort_ui::pointer(app, ToolEvent::Down { x: a[0], y: a[1], pressure: 1.0 }, m);
             crate::distort_ui::pointer(app, ToolEvent::Move { x: b[0], y: b[1], pressure: 1.0 }, m);
             crate::distort_ui::pointer(app, ToolEvent::Up { x: b[0], y: b[1] }, m);
         };
-        let step = |app: &mut PhotocraftApp, st: Step| {
+        let step = |app: &mut PhotostarApp, st: Step| {
             app.distort.vanishing.as_mut().unwrap().step(st);
             sync_preview(app);
         };
@@ -1479,15 +1479,15 @@ mod tests {
             s.strokes[0].points.extend_from_slice(&points[2..]);
             assert!(s.paint_preview(|| 2));
             let (shown, _) = s.shown().unwrap();
-            let expected = photocraft_compose::flatten(&shown).px;
-            assert_ne!(expected, photocraft_compose::flatten(&app.session.active().unwrap().doc).px);
+            let expected = photostar_compose::flatten(&shown).px;
+            assert_ne!(expected, photostar_compose::flatten(&app.session.active().unwrap().doc).px);
             commit(&mut app).unwrap();
-            assert_eq!(photocraft_compose::flatten(&app.session.active().unwrap().doc).px, expected, "newLayer={new_layer}");
+            assert_eq!(photostar_compose::flatten(&app.session.active().unwrap().doc).px, expected, "newLayer={new_layer}");
         }
     }
 
     /// A red square on the clipboard (copied from the layer's top-left corner).
-    fn copy_red_square(app: &mut PhotocraftApp) {
+    fn copy_red_square(app: &mut PhotostarApp) {
         app.session.execute("select.rect", json!({"x": 0, "y": 0, "width": 40, "height": 40})).unwrap();
         app.session.execute("edit.fill", json!({"color": "#ff0000"})).unwrap();
         app.session.execute("edit.copy", json!({})).unwrap();
@@ -1516,9 +1516,9 @@ mod tests {
             let s = app.distort.vanishing.as_ref().unwrap();
             assert!(s.preview_has_paste(), "the preview shows the paste, so the overlay isn't drawn over the strokes");
             let (shown, _) = s.shown().unwrap();
-            let expected = photocraft_compose::flatten(&shown).px;
+            let expected = photostar_compose::flatten(&shown).px;
             commit(&mut app).unwrap();
-            assert_eq!(photocraft_compose::flatten(&app.session.active().unwrap().doc).px, expected, "newLayer={new_layer}");
+            assert_eq!(photostar_compose::flatten(&app.session.active().unwrap().doc).px, expected, "newLayer={new_layer}");
         }
     }
 
@@ -1529,7 +1529,7 @@ mod tests {
         crate::distort_ui::menu(&mut app, &ctx, VP, &json!({})).unwrap().unwrap();
         control(&mut app, &json!({"planes": [{"corners": [[10, 10], [230, 10], [230, 150], [10, 150]]}]})).unwrap();
         control(&mut app, &json!({"clone": [{"source": [200, 130], "points": [[30, 130]], "size": 8}]})).unwrap();
-        let red = |app: &PhotocraftApp, x: i32, y: i32| {
+        let red = |app: &PhotostarApp, x: i32, y: i32| {
             let (shown, _) = app.distort.vanishing.as_ref().unwrap().shown().unwrap();
             let l = app.session.active().unwrap().active_layer.unwrap();
             shown.layer(l).unwrap().surface().unwrap().rgba(x, y)[0]
@@ -1551,12 +1551,12 @@ mod tests {
         control(&mut app, &json!({"planes": [{"corners": [[10, 10], [230, 10], [230, 150], [10, 150]]}], "tool": "edit"})).unwrap();
         control(&mut app, &json!({"clone": [{"source": [200, 130], "points": [[30, 130]], "size": 8}]})).unwrap();
         let layer = app.session.active().unwrap().active_layer.unwrap();
-        let red = |app: &PhotocraftApp, x: i32, y: i32| {
+        let red = |app: &PhotostarApp, x: i32, y: i32| {
             let (shown, _) = crate::distort_ui::display_doc(app, 0)?;
             Some(shown.layer(layer).unwrap().surface().unwrap().rgba(x, y)[0])
         };
         assert!(red(&app, 100, 60).unwrap() > 0.9, "the paste is in the preview");
-        let ev = |app: &mut PhotocraftApp, e: ToolEvent| crate::distort_ui::pointer(app, e, egui::Modifiers::NONE);
+        let ev = |app: &mut PhotostarApp, e: ToolEvent| crate::distort_ui::pointer(app, e, egui::Modifiers::NONE);
         ev(&mut app, ToolEvent::Down { x: 100.0, y: 60.0, pressure: 1.0 });
         ev(&mut app, ToolEvent::Move { x: 60.0, y: 100.0, pressure: 1.0 });
         // Mid-drag: no copy left behind at the old place, only the overlay at the pointer.
@@ -1612,7 +1612,7 @@ mod tests {
     }
 
     /// Opens the mode on the active layer of `app_with_layer` and stamps one stroke.
-    fn stamp_a_stroke(app: &mut PhotocraftApp, ctx: &egui::Context) {
+    fn stamp_a_stroke(app: &mut PhotostarApp, ctx: &egui::Context) {
         crate::distort_ui::menu(app, ctx, VP, &json!({})).unwrap().unwrap();
         control(app, &json!({"planes": [{"corners": [[10, 10], [230, 10], [230, 150], [10, 150]]}]})).unwrap();
         control(app, &json!({"clone": [{"source": [60, 80], "points": [[120, 80], [126, 80]], "size": 12}]})).unwrap();
@@ -1648,7 +1648,7 @@ mod tests {
             app.session.execute("layer.new.layer", json!({"name": "other"})).unwrap();
             let other = app.session.active().unwrap().active_layer.unwrap();
             sync_preview(&mut app);
-            let expected = photocraft_compose::flatten(&crate::distort_ui::display_doc(&app, 0).unwrap().0).px;
+            let expected = photostar_compose::flatten(&crate::distort_ui::display_doc(&app, 0).unwrap().0).px;
             commit(&mut app).unwrap();
             let d = &app.session.active().unwrap().doc;
             assert!(d.layer(other).unwrap().surface().unwrap().content_bounds().is_empty(), "newLayer={new_layer}");
@@ -1657,7 +1657,7 @@ mod tests {
                 // And it becomes active, so Fade and a colour-channel target follow it.
                 assert_eq!(app.session.active().unwrap().active_layer, Some(layer));
             }
-            assert_eq!(photocraft_compose::flatten(d).px, expected, "newLayer={new_layer}");
+            assert_eq!(photostar_compose::flatten(d).px, expected, "newLayer={new_layer}");
         }
     }
 
@@ -1688,9 +1688,9 @@ mod tests {
         let px = shown.layer(layer).unwrap().surface().unwrap();
         assert!(px.rgba(210, 30)[1] > 0.9, "the edit shows: {:?}", px.rgba(210, 30));
         assert!(px.rgba(120, 80) != st.doc.layer(layer).unwrap().surface().unwrap().rgba(120, 80), "and so does the stroke");
-        let expected = photocraft_compose::flatten(&shown).px;
+        let expected = photostar_compose::flatten(&shown).px;
         commit(&mut app).unwrap();
-        assert_eq!(photocraft_compose::flatten(&app.session.active().unwrap().doc).px, expected);
+        assert_eq!(photostar_compose::flatten(&app.session.active().unwrap().doc).px, expected);
     }
 
     #[test]

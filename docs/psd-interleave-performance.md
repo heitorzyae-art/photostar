@@ -39,8 +39,8 @@ Local raw evidence and the shared harness: `.local/perf-real-261019/` in the rep
 
 These checks passed when the split was prepared; they were not all rerun for this benchmark review. Current affected checks are listed above where production code changed.
 
-- `cargo test -p photocraft-io --locked`: passed (617 passed, 6 ignored).
-- `cargo clippy -p photocraft-io --locked --all-targets -- -D warnings`: passed.
+- `cargo test -p photostar-io --locked`: passed (617 passed, 6 ignored).
+- `cargo clippy -p photostar-io --locked --all-targets -- -D warnings`: passed.
 - `cargo xtask layers`: passed.
-- `cargo check -p photocraft-io --locked --target wasm32-unknown-unknown`: passed.
+- `cargo check -p photostar-io --locked --target wasm32-unknown-unknown`: passed.
 - `cargo xtask test-corpus -p io`: passed (646 passed, 6 ignored).

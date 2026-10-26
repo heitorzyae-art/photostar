@@ -1,4 +1,4 @@
-//! # photocraft-algo
+//! # photostar-algo
 //!
 //! CPU image filters (Photoshop's Filter menu): blur, sharpen, noise,
 //! pixelate, stylize and distort. Every filter is
@@ -93,9 +93,9 @@ pub use params_ext::*;
 
 mod params_ext;
 
-use photocraft_color::ColorMode;
-use photocraft_geom::Rect;
-use photocraft_raster::Surface;
+use photostar_color::ColorMode;
+use photostar_geom::Rect;
+use photostar_raster::Surface;
 use serde::{Deserialize, Serialize};
 
 /// How far outside an output tile a filter reads.
@@ -995,7 +995,7 @@ pub fn apply_in_with(
     bounds: Rect,
     selection: Option<&Surface>,
     extent: Rect,
-    ctl: &photocraft_raster::Interrupt,
+    ctl: &photostar_raster::Interrupt,
 ) -> Option<Surface> {
     apply_tiled_with(surface, params, area.intersect(&extent), bounds, selection, auto_tile(params, bounds), Some(extent), ctl)
 }
@@ -1029,7 +1029,7 @@ pub fn apply_tiled(
     extent: Option<Rect>,
 ) -> Surface {
     // Preserve the input if a checked filter allocation cannot be completed.
-    apply_tiled_with(surface, params, area, bounds, selection, tile, extent, &photocraft_raster::Interrupt::NONE).unwrap_or_else(|| surface.clone())
+    apply_tiled_with(surface, params, area, bounds, selection, tile, extent, &photostar_raster::Interrupt::NONE).unwrap_or_else(|| surface.clone())
 }
 
 /// [`apply_tiled`] with cancellation (checked before each tile, so a cancel takes effect within
@@ -1044,7 +1044,7 @@ pub fn apply_tiled_with(
     selection: Option<&Surface>,
     tile: i32,
     extent: Option<Rect>,
-    ctl: &photocraft_raster::Interrupt,
+    ctl: &photostar_raster::Interrupt,
 ) -> Option<Surface> {
     apply_tiled_with_impl(surface, params, area, bounds, selection, tile, extent, ctl, true)
 }
@@ -1058,7 +1058,7 @@ fn apply_tiled_with_impl(
     selection: Option<&Surface>,
     tile: i32,
     extent: Option<Rect>,
-    ctl: &photocraft_raster::Interrupt,
+    ctl: &photostar_raster::Interrupt,
     prepare_fast_paths: bool,
 ) -> Option<Surface> {
     // Every dispatch path needs a positive step, including Motion Blur's fallback.
@@ -1275,7 +1275,7 @@ fn apply_box_blur(
     extent: Option<Rect>,
     selection: Option<&Surface>,
     boxes: &[usize],
-    ctl: &photocraft_raster::Interrupt,
+    ctl: &photostar_raster::Interrupt,
 ) -> Option<Surface> {
     let fmt = surface.format();
     let n = fmt.channels();
@@ -1293,7 +1293,7 @@ fn apply_box_blur(
         let mut columns: Vec<(Surface, Vec<blur::Strip>)> = Vec::new();
         for (t, data) in strips {
             match columns.last_mut() {
-                Some((_, v)) if v.first().is_some_and(|(r, _)| r.x0.div_euclid(photocraft_geom::TILE_SIZE) == t.x0.div_euclid(photocraft_geom::TILE_SIZE)) => {
+                Some((_, v)) if v.first().is_some_and(|(r, _)| r.x0.div_euclid(photostar_geom::TILE_SIZE) == t.x0.div_euclid(photostar_geom::TILE_SIZE)) => {
                     v.push((t, data))
                 }
                 _ => columns.push((Surface::with_default(fmt, &surface.default_pixel()), vec![(t, data)])),
@@ -1394,7 +1394,7 @@ fn apply_radial_reference(
     bounds: Rect,
     selection: Option<&Surface>,
     extent: Rect,
-    ctl: &photocraft_raster::Interrupt,
+    ctl: &photostar_raster::Interrupt,
 ) -> Option<Surface> {
     apply_tiled_with_impl(surface, params, area.intersect(&extent), bounds, selection, auto_tile(params, bounds), Some(extent), ctl, false)
 }

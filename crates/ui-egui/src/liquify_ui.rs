@@ -9,13 +9,13 @@
 //! OK runs `filter.liquify` with the same strokes and gets the same field.
 
 use egui::{Align2, Color32, FontId, Pos2, Rect as ERect, Sense, Stroke, TextureHandle, pos2, vec2};
-use photocraft_algo::liquify::{LiquifyField, LiquifyStroke, LiquifyTool, ProxyImage, auto_cell};
-use photocraft_doc::{DocId, Document, LayerId};
-use photocraft_geom::Rect;
-use photocraft_raster::Surface;
+use photostar_algo::liquify::{LiquifyField, LiquifyStroke, LiquifyTool, ProxyImage, auto_cell};
+use photostar_doc::{DocId, Document, LayerId};
+use photostar_geom::Rect;
+use photostar_raster::Surface;
 use serde_json::{Value, json};
 
-use crate::PhotocraftApp;
+use crate::PhotostarApp;
 use crate::canvas::ToolEvent;
 use crate::theme::Tokens;
 use crate::widgets;
@@ -490,7 +490,7 @@ impl LiquifyDialog {
 }
 
 /// Opens the dialog on the active layer.
-pub fn open(app: &mut PhotocraftApp, ctx: &egui::Context) -> Result<(), String> {
+pub fn open(app: &mut PhotostarApp, ctx: &egui::Context) -> Result<(), String> {
     let (layer, surf, _) = crate::distort_ui::active_pixels(app)?;
     let canvas = app.session.active().ok_or("no document")?.doc.bounds();
     open_on(app, ctx, layer, surf, Vec::new(), auto_cell(canvas), None)
@@ -499,10 +499,10 @@ pub fn open(app: &mut PhotocraftApp, ctx: &egui::Context) -> Result<(), String> 
 /// Re-opens Liquify smart filter `index` of smart object `layer` with its recorded strokes and
 /// mesh size, previewing on the pixels below it; OK updates that filter
 /// (`layer.smartFilter.setParams`).
-pub fn open_smart_filter(app: &mut PhotocraftApp, ctx: &egui::Context, layer: LayerId, index: usize) -> Result<(), String> {
-    use photocraft_engine::distort_cmds::{LIQUIFY, liquify_params};
+pub fn open_smart_filter(app: &mut PhotostarApp, ctx: &egui::Context, layer: LayerId, index: usize) -> Result<(), String> {
+    use photostar_engine::distort_cmds::{LIQUIFY, liquify_params};
     let st = app.session.active().ok_or("no document")?;
-    let Some(photocraft_doc::LayerContent::Smart(sm)) = st.doc.layer(layer).map(|l| &l.content) else {
+    let Some(photostar_doc::LayerContent::Smart(sm)) = st.doc.layer(layer).map(|l| &l.content) else {
         return Err("the layer is not a smart object".into());
     };
     let filter = sm.smart_filters.get(index).ok_or("no such smart filter")?;
@@ -510,14 +510,14 @@ pub fn open_smart_filter(app: &mut PhotocraftApp, ctx: &egui::Context, layer: La
         return Err("the smart filter is not a Liquify filter".into());
     }
     let (strokes, cell) = liquify_params(LIQUIFY, &filter.params, st.doc.bounds()).map_err(|e| e.to_string())?;
-    let surf = photocraft_engine::smart_cmds::render_below_filter(&st.doc, sm, index)
+    let surf = photostar_engine::smart_cmds::render_below_filter(&st.doc, sm, index)
         .map_err(|e| e.to_string())?
         .ok_or("the smart object's contents are unavailable (missing linked file?)")?;
     open_on(app, ctx, layer, surf, strokes, cell, Some(index))
 }
 
 fn open_on(
-    app: &mut PhotocraftApp,
+    app: &mut PhotostarApp,
     ctx: &egui::Context,
     layer: LayerId,
     surf: Surface,
@@ -579,14 +579,14 @@ fn open_on(
 }
 
 /// Keeps the brush settings for the next time Liquify opens, also after a restart.
-fn remember(app: &mut PhotocraftApp, opts: &LiquifyOpts) {
+fn remember(app: &mut PhotostarApp, opts: &LiquifyOpts) {
     let v = opts.to_json();
     app.session.prefs.edit(|p| p.dialogs.insert(REMEMBERED.into(), v));
 }
 
 /// Cancel (button, Esc or the control channel): the document is untouched; the brush settings
 /// are kept.
-pub fn cancel(app: &mut PhotocraftApp) {
+pub fn cancel(app: &mut PhotostarApp) {
     if let Some(d) = app.distort.liquify.take() {
         remember(app, &d.opts);
     }
@@ -596,7 +596,7 @@ pub fn cancel(app: &mut PhotocraftApp) {
 /// a smart filter, OK updates that filter instead (also when Restore All left no strokes). The
 /// dialog closes either way. `app.run` shows a failed command's error in the status bar, and
 /// `commit` returns it.
-pub fn commit(app: &mut PhotocraftApp) -> Result<(), String> {
+pub fn commit(app: &mut PhotostarApp) -> Result<(), String> {
     let Some(mut d) = app.distort.liquify.take() else { return Ok(()) };
     remember(app, &d.opts);
     d.end();
@@ -612,7 +612,7 @@ pub fn commit(app: &mut PhotocraftApp) -> Result<(), String> {
 }
 
 /// Control channel: `filter.liquify {"ui": {...}}` while the dialog is open.
-pub fn control(app: &mut PhotocraftApp, ui: &Value) -> Result<Value, String> {
+pub fn control(app: &mut PhotostarApp, ui: &Value) -> Result<Value, String> {
     if ui.get("commit").and_then(Value::as_bool) == Some(true) {
         commit(app)?;
         return Ok(json!({"committed": true}));
@@ -690,7 +690,7 @@ fn resized_brush(start_size: f32, start_density: f32, dx: f32, dy: f32) -> (f32,
 /// Pointer in document coordinates (from the preview or the control channel). Alt at
 /// pointer-down subtracts from the freeze mask (lasso), reverses a twirl and swaps Pucker/Bloat;
 /// Shift adds to the mask, same as no modifier.
-pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) {
+pub fn pointer(app: &mut PhotostarApp, ev: ToolEvent, mods: egui::Modifiers) {
     let now = crate::gpu_canvas::now_ms();
     let Some(d) = app.distort.liquify.as_mut() else { return };
     match ev {
@@ -727,7 +727,7 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) {
 }
 
 /// Ctrl+Z / Ctrl+Shift+Z inside Liquify, including while a slider's text field is focused.
-pub fn history_keys(app: &mut PhotocraftApp, ctx: &egui::Context) {
+pub fn history_keys(app: &mut PhotostarApp, ctx: &egui::Context) {
     let Some(d) = app.distort.liquify.as_mut() else { return };
     let cmd_shift = egui::Modifiers::COMMAND | egui::Modifiers::SHIFT;
     if ctx.input_mut(|i| i.consume_key(cmd_shift, egui::Key::Z)) {
@@ -737,7 +737,7 @@ pub fn history_keys(app: &mut PhotocraftApp, ctx: &egui::Context) {
     }
 }
 
-pub fn keys(app: &mut PhotocraftApp, ctx: &egui::Context) {
+pub fn keys(app: &mut PhotostarApp, ctx: &egui::Context) {
     history_keys(app, ctx);
     // ⌘+ / ⌘− / ⌘0 / ⌘1 (or their overrides) zoom the preview, not the canvas behind it (#7210).
     let nav = if app.distort.liquify.is_some() { crate::shortcuts::nav_shortcut(app, ctx) } else { None };
@@ -824,10 +824,10 @@ fn shortcut(t: LiquifyTool) -> &'static str {
 /// The backdrop for Show Backdrop › Use `of`: the document as it is (All Layers, the liquified
 /// layer's own pixels included, as in Photoshop) or that one layer alone. A layer that is gone
 /// shows All Layers.
-fn load_backdrop(app: &PhotocraftApp, ctx: &egui::Context, of: Option<u64>, canvas: Rect) -> Option<TextureHandle> {
+fn load_backdrop(app: &PhotostarApp, ctx: &egui::Context, of: Option<u64>, canvas: Rect) -> Option<TextureHandle> {
     let st = app.session.active()?;
-    let buf = photocraft_compose::render(&backdrop_doc(&st.doc, of), canvas);
-    let mut s = photocraft_raster::Surface::new(photocraft_color::PixelFormat::RGBA8);
+    let buf = photostar_compose::render(&backdrop_doc(&st.doc, of), canvas);
+    let mut s = photostar_raster::Surface::new(photostar_color::PixelFormat::RGBA8);
     let flat: Vec<f32> = buf.px.iter().flat_map(|p| *p).collect();
     s.write_region(canvas, &flat);
     Some(ctx.load_texture("liquify-backdrop", crate::distort_ui::surface_image(&s, canvas, PROXY_SIDE), egui::TextureOptions::LINEAR))
@@ -848,11 +848,11 @@ fn backdrop_doc(doc: &Document, of: Option<u64>) -> std::borrow::Cow<'_, Documen
 }
 
 /// Makes layer `id` and the groups holding it visible; whether it was found.
-fn reveal(layers: &mut [photocraft_doc::Layer], id: LayerId) -> bool {
+fn reveal(layers: &mut [photostar_doc::Layer], id: LayerId) -> bool {
     layers.iter_mut().any(|l| {
         let found = l.id == id
             || match &mut l.content {
-                photocraft_doc::LayerContent::Group(g) => reveal(&mut g.children, id),
+                photostar_doc::LayerContent::Group(g) => reveal(&mut g.children, id),
                 _ => false,
             };
         if found {
@@ -885,7 +885,7 @@ fn backdrop_layering<T: Copy>(backdrop: Option<T>, mode: BackdropMode, opacity: 
 }
 
 /// Draws the dialog (a full-window layer over the app).
-pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut PhotostarApp, ctx: &egui::Context) {
     let t = Tokens::get(ctx);
     let screen = ctx.content_rect();
     // The backdrop is built when it's first shown and again when its Use changes.
@@ -1299,8 +1299,8 @@ mod tests {
         assert_eq!((size, density), (1.0, 50.0));
     }
 
-    fn app_with_layer() -> PhotocraftApp {
-        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+    fn app_with_layer() -> PhotostarApp {
+        let mut app = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
         app.session.execute("file.new", json!({"width": 120, "height": 80, "depth": 8})).unwrap();
         app.session.execute("layer.new.layer", json!({})).unwrap();
         app.session
@@ -1364,7 +1364,7 @@ mod tests {
         let app = app_with_layer();
         let st = app.session.active().unwrap();
         let (layer, background) = (st.active_layer.unwrap(), st.doc.layers[0].id);
-        let at = |doc: &Document| photocraft_compose::render(doc, Rect::new(10, 10, 11, 11)).px[0];
+        let at = |doc: &Document| photostar_compose::render(doc, Rect::new(10, 10, 11, 11)).px[0];
         let own = at(&st.doc);
         assert_eq!(at(&backdrop_doc(&st.doc, None)), own, "All Layers");
         assert_eq!(at(&backdrop_doc(&st.doc, Some(layer.0))), own, "the liquified layer alone");
@@ -1568,7 +1568,7 @@ mod tests {
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         control(&mut app, &json!({"tool": "forwardWarp", "size": 40})).unwrap();
-        let draw = |app: &mut PhotocraftApp, x: f64| {
+        let draw = |app: &mut PhotostarApp, x: f64| {
             for ev in
                 [ToolEvent::Down { x, y: 40.0, pressure: 1.0 }, ToolEvent::Move { x: x + 14.0, y: 40.0, pressure: 1.0 }, ToolEvent::Up { x: x + 14.0, y: 40.0 }]
             {
@@ -1603,7 +1603,7 @@ mod tests {
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         control(&mut app, &json!({"tool": "lassoMask"})).unwrap();
-        let lasso = |app: &mut PhotocraftApp, m: egui::Modifiers, r: [f64; 4]| {
+        let lasso = |app: &mut PhotostarApp, m: egui::Modifiers, r: [f64; 4]| {
             pointer(app, ToolEvent::Down { x: r[0], y: r[1], pressure: 1.0 }, m);
             for (x, y) in [(r[2], r[1]), (r[2], r[3]), (r[0], r[3])] {
                 pointer(app, ToolEvent::Move { x, y, pressure: 1.0 }, m);
@@ -1631,7 +1631,7 @@ mod tests {
         let ctx = egui::Context::default();
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
-        let dab = |app: &mut PhotocraftApp, m: egui::Modifiers| {
+        let dab = |app: &mut PhotostarApp, m: egui::Modifiers| {
             pointer(app, ToolEvent::Down { x: 50.0, y: 40.0, pressure: 1.0 }, m);
             pointer(app, ToolEvent::Up { x: 50.0, y: 40.0 }, m);
             app.distort.liquify.as_ref().unwrap().strokes.last().unwrap().tool
@@ -1669,11 +1669,11 @@ mod tests {
     #[test]
     fn alt_drag_resize_keeps_the_brush_where_it_started() {
         let ctx = egui::Context::default();
-        PhotocraftApp::setup_context(&ctx, Default::default());
+        PhotostarApp::setup_context(&ctx, Default::default());
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         let screen = ERect::from_min_size(pos2(0.0, 0.0), vec2(1400.0, 900.0));
-        let frame = |app: &mut PhotocraftApp, events: Vec<egui::Event>, mods: egui::Modifiers| {
+        let frame = |app: &mut PhotostarApp, events: Vec<egui::Event>, mods: egui::Modifiers| {
             let events = std::iter::once(egui::Event::ModifiersChanged(mods)).chain(events).collect();
             let raw = egui::RawInput { screen_rect: Some(screen), events, ..Default::default() };
             ctx.run_ui(raw, |ui| show(app, ui.ctx())).textures_delta.clear();
@@ -1754,14 +1754,14 @@ mod tests {
         {
             pointer(&mut app, ev, egui::Modifiers::NONE);
         }
-        let strokes = |app: &PhotocraftApp| app.distort.liquify.as_ref().unwrap().strokes.len();
+        let strokes = |app: &PhotostarApp| app.distort.liquify.as_ref().unwrap().strokes.len();
         assert_eq!(strokes(&app), 1);
 
         // One frame of the real shortcut handler, then a focused single-line text edit (the
         // numeric fields are text edits), as the app orders them.
         let mut text = String::from("100");
         let field = egui::Id::unique("liquify-size-field");
-        let mut frame = |app: &mut PhotocraftApp, events: Vec<egui::Event>| {
+        let mut frame = |app: &mut PhotostarApp, events: Vec<egui::Event>| {
             let raw = egui::RawInput { events, ..Default::default() };
             let mut out = ctx.run_ui(raw, |ui| {
                 crate::shortcuts::handle(app, ui.ctx());
@@ -1788,8 +1788,8 @@ mod tests {
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         app.distort.liquify.as_mut().unwrap().opts.size = 2.0;
-        let size = |app: &PhotocraftApp| app.distort.liquify.as_ref().unwrap().opts.size;
-        let press = |app: &mut PhotocraftApp, key: egui::Key| {
+        let size = |app: &PhotostarApp| app.distort.liquify.as_ref().unwrap().opts.size;
+        let press = |app: &mut PhotostarApp, key: egui::Key| {
             let ev = egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::NONE };
             let mut out = ctx.run_ui(egui::RawInput { events: vec![ev], ..Default::default() }, |ui| crate::shortcuts::handle(app, ui.ctx()));
             out.textures_delta.clear();
@@ -1803,7 +1803,7 @@ mod tests {
         // With a text edit focused, `[` belongs to the field.
         let mut text = String::new();
         let field = egui::Id::unique("liquify-size-field");
-        let focused_frame = |app: &mut PhotocraftApp, text: &mut String, events: Vec<egui::Event>| {
+        let focused_frame = |app: &mut PhotostarApp, text: &mut String, events: Vec<egui::Event>| {
             let mut out = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
                 crate::shortcuts::handle(app, ui.ctx());
                 ui.add(egui::TextEdit::singleline(text).id(field)).request_focus();
@@ -1823,7 +1823,7 @@ mod tests {
 
     /// A frame of the open dialog in a 1000 × 700 window with `events`; returns the preview's
     /// centre (between the tool strip and the options panel, under the title strip).
-    fn frame(app: &mut PhotocraftApp, ctx: &egui::Context, events: Vec<egui::Event>) -> Pos2 {
+    fn frame(app: &mut PhotostarApp, ctx: &egui::Context, events: Vec<egui::Event>) -> Pos2 {
         let screen = ERect::from_min_size(Pos2::ZERO, vec2(1000.0, 700.0));
         let raw = egui::RawInput { screen_rect: Some(screen), events, ..Default::default() };
         let mut out = ctx.run_ui(raw, |ui| show(app, ui.ctx()));
@@ -1836,7 +1836,7 @@ mod tests {
     #[test]
     fn zoom_shortcuts_zoom_the_preview_not_the_canvas() {
         let ctx = egui::Context::default();
-        PhotocraftApp::setup_context(&ctx, crate::theme::ThemeKind::ALL[0]);
+        PhotostarApp::setup_context(&ctx, crate::theme::ThemeKind::ALL[0]);
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         frame(&mut app, &ctx, Vec::new());
@@ -1864,7 +1864,7 @@ mod tests {
     #[test]
     fn pinch_and_wheel_zoom_the_preview_about_the_pointer() {
         let ctx = egui::Context::default();
-        PhotocraftApp::setup_context(&ctx, crate::theme::ThemeKind::ALL[0]);
+        PhotostarApp::setup_context(&ctx, crate::theme::ThemeKind::ALL[0]);
         let mut app = app_with_layer();
         open(&mut app, &ctx).unwrap();
         let center = frame(&mut app, &ctx, Vec::new());
@@ -1940,7 +1940,7 @@ mod tests {
         open(&mut app, &ctx).unwrap();
         control(&mut app, &json!({"tool": "forwardWarp", "size": 30})).unwrap();
         let screen = ERect::from_min_size(pos2(0.0, 0.0), vec2(1280.0, 800.0));
-        let frame = |app: &mut PhotocraftApp, events: Vec<egui::Event>| {
+        let frame = |app: &mut PhotostarApp, events: Vec<egui::Event>| {
             let raw = egui::RawInput { screen_rect: Some(screen), events, ..Default::default() };
             let mut out = ctx.run_ui(raw, |ui| show(app, ui.ctx()));
             out.textures_delta.clear();
@@ -1990,7 +1990,7 @@ mod tests {
 
     /// A smart object with a Liquify smart filter (one stroke, mesh size 3) and a Gaussian Blur
     /// above it.
-    fn smart_liquify_app() -> (PhotocraftApp, LayerId) {
+    fn smart_liquify_app() -> (PhotostarApp, LayerId) {
         let mut app = app_with_layer();
         app.run("layer.smartObjects.convertToSmartObject", json!({})).unwrap();
         let stroke = json!({"tool": "forwardWarp", "size": 40, "points": [[40.0, 40.0, 1.0], [48.0, 41.0, 1.0], [56.0, 40.0, 1.0]]});
@@ -2000,14 +2000,14 @@ mod tests {
         (app, layer)
     }
 
-    fn smart(app: &PhotocraftApp, layer: LayerId) -> photocraft_doc::SmartObject {
+    fn smart(app: &PhotostarApp, layer: LayerId) -> photostar_doc::SmartObject {
         match &app.session.active().unwrap().doc.layer(layer).unwrap().content {
-            photocraft_doc::LayerContent::Smart(sm) => sm.clone(),
+            photostar_doc::LayerContent::Smart(sm) => sm.clone(),
             _ => panic!("not a smart object"),
         }
     }
 
-    fn drag(app: &mut PhotocraftApp, from: f64, to: f64) {
+    fn drag(app: &mut PhotostarApp, from: f64, to: f64) {
         for ev in [ToolEvent::Down { x: from, y: 40.0, pressure: 1.0 }, ToolEvent::Move { x: to, y: 40.0, pressure: 1.0 }, ToolEvent::Up { x: to, y: 40.0 }] {
             pointer(app, ev, egui::Modifiers::NONE);
         }
@@ -2029,7 +2029,7 @@ mod tests {
         assert_eq!(d.strokes, recorded);
         assert_eq!(d.field, LiquifyField::from_strokes(d.canvas, 3.0, &recorded));
         // The preview starts from the pixels below the filter (no liquify, no blur).
-        let below = photocraft_engine::smart_cmds::render_below_filter(&app.session.active().unwrap().doc, &sm, 0).unwrap().unwrap();
+        let below = photostar_engine::smart_cmds::render_below_filter(&app.session.active().unwrap().doc, &sm, 0).unwrap().unwrap();
         assert_eq!(d.source.read_region(d.canvas), below.read_region(d.canvas));
 
         drag(&mut app, 70.0, 84.0);
@@ -2037,7 +2037,7 @@ mod tests {
         assert!(app.distort.liquify.is_none());
         let sm = smart(&app, layer);
         assert_eq!(sm.smart_filters.len(), 2, "edited in place, not added");
-        assert_eq!(sm.smart_filters[0].command, photocraft_engine::distort_cmds::LIQUIFY);
+        assert_eq!(sm.smart_filters[0].command, photostar_engine::distort_cmds::LIQUIFY);
         assert_eq!(sm.smart_filters[0].params["strokes"].as_array().map(Vec::len), Some(2));
         assert_eq!(sm.smart_filters[0].params["meshSize"], json!(3.0));
         assert_eq!(sm.smart_filters[1].command, "filter.blur.gaussianBlur");

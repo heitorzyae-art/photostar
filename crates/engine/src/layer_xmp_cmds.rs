@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use photocraft_doc::LayerId;
+use photostar_doc::LayerId;
 use serde_json::{Map, Value, json};
 
 use crate::commands::CommandSpec;
@@ -73,7 +73,7 @@ fn xmp_metadata(s: &mut Session, p: &Value) -> Result<Value> {
         })?;
         if let Some(st) = s.active_mut() {
             // Saved metadata only; no canvas pixels need recompositing.
-            st.last_damage = Some(photocraft_geom::Rect::EMPTY);
+            st.last_damage = Some(photostar_geom::Rect::EMPTY);
         }
     }
     Ok(json!({"layer": id.0, "rawData": new, "changed": changed}))

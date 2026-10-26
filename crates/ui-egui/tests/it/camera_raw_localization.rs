@@ -1,7 +1,7 @@
 //! Camera Raw labels and language changes through the real shared native/WASM shell.
 use egui::{accesskit::Role, pos2, vec2};
 use egui_kittest::{Harness, kittest::Queryable};
-use photocraft_ui_egui::{PhotocraftApp, camera_raw_ui, control, i18n, theme::ThemeKind};
+use photostar_ui_egui::{PhotostarApp, camera_raw_ui, control, i18n, theme::ThemeKind};
 use serde_json::json;
 
 #[test]
@@ -9,16 +9,16 @@ fn all_registered_languages_render_camera_raw_and_switch_without_resetting_view_
     // On Linux some scripts arrive through the background Fontconfig lookup. Kittest's strict
     // missing-glyph policy must not race that scan: wait for it exactly as the i18n live tests do.
     #[cfg(target_os = "linux")]
-    assert!(photocraft_ui_egui::cjk_fonts::wait_for_fontconfig_cjk_scan(), "Fontconfig CJK lookup did not finish within 10 seconds");
+    assert!(photostar_ui_egui::cjk_fonts::wait_for_fontconfig_cjk_scan(), "Fontconfig CJK lookup did not finish within 10 seconds");
     assert_required_camera_raw_fonts();
-    let _gpu = photocraft_testkit::gpu_lock();
+    let _gpu = photostar_testkit::gpu_lock();
     for lang in i18n::Lang::all() {
-        let gpu = std::env::var_os("PHOTOCRAFT_LOCALE_SNAPSHOTS").is_some();
+        let gpu = std::env::var_os("PHOTOSTAR_LOCALE_SNAPSHOTS").is_some();
         let builder = Harness::builder().with_step_dt(1.0 / 60.0).with_size(vec2(1440.0, 1000.0));
         let builder = if gpu { builder.wgpu() } else { builder };
         let mut h = builder.build_eframe(move |cc| {
-            PhotocraftApp::setup_context(&cc.egui_ctx, ThemeKind::Pro);
-            let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+            PhotostarApp::setup_context(&cc.egui_ctx, ThemeKind::Pro);
+            let mut app = PhotostarApp::new(photostar_engine::Session::new(), Default::default());
             app.run("file.new", json!({"width":64,"height":48})).unwrap();
             app.run("layer.new.layer", json!({})).unwrap();
             app.run("edit.fill", json!({"color":"#80ff00"})).unwrap();
@@ -98,7 +98,7 @@ fn all_registered_languages_render_camera_raw_and_switch_without_resetting_view_
         let preview = control::inspect(h.state(), &ctx)["cameraRaw"]["previewRect"].clone();
         h.hover_at(pos2((preview[0].as_f64().unwrap() + preview[2].as_f64().unwrap()) as f32 * 0.5, 400.0));
         h.run_steps(3);
-        if let Ok(dir) = std::env::var("PHOTOCRAFT_LOCALE_SNAPSHOTS") {
+        if let Ok(dir) = std::env::var("PHOTOSTAR_LOCALE_SNAPSHOTS") {
             std::fs::create_dir_all(&dir).unwrap();
             h.render().unwrap().save(std::path::Path::new(&dir).join(format!("{}.png", lang.code()))).unwrap();
         }
@@ -122,10 +122,8 @@ fn assert_required_camera_raw_fonts() {
     // checks the actual translated labels under egui_kittest's strict missing-glyph policy.
     if std::env::var_os("CRAFT_FONTS_REQUIRED").is_some() {
         for (family, script) in [("BIZ UDPGothic", "Jpan"), ("Noto Sans CJK SC", "Hans"), ("NanumGothic", "Kore"), ("Noto Sans Devanagari", "Deva")] {
-            let faces: Vec<_> = photocraft_text::craft_fonts::CRAFT_FONTS
-                .iter()
-                .filter(|f| f.family == family && f.style == "Regular" && f.scripts.contains(&script))
-                .collect();
+            let faces: Vec<_> =
+                photostar_text::craft_fonts::CRAFT_FONTS.iter().filter(|f| f.family == family && f.style == "Regular" && f.scripts.contains(&script)).collect();
             assert_eq!(faces.len(), 1, "the central default manifest supplies one {family} {script} Regular face");
             assert!(!faces[0].bytes.is_empty(), "{family} {script} has an empty face");
         }

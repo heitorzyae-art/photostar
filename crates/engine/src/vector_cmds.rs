@@ -10,20 +10,20 @@
 //! ```
 //!
 //! A knot given as `[x, y]` is a corner with retracted handles; `in`/`out` default to the
-//! anchor. The serde form of `photocraft_doc::Path` is accepted too. Colours are `"#rrggbb"`,
+//! anchor. The serde form of `photostar_doc::Path` is accepted too. Colours are `"#rrggbb"`,
 //! `"#rrggbbaa"` or `[r,g,b,a]` (0..1); opacities are percentages (0..100).
 //!
-//! Every edit re-renders the shape layer's cache with `photocraft-vector` in one undoable step.
-//! PSD blocks stay byte-identical while they still decode to the model (see `photocraft-io`).
+//! Every edit re-renders the shape layer's cache with `photostar-vector` in one undoable step.
+//! PSD blocks stay byte-identical while they still decode to the model (see `photostar-io`).
 
-use photocraft_algo::selection::{self as sel, SelectionMode};
-use photocraft_color::{BlendMode, Color};
-use photocraft_doc::{
+use photostar_algo::selection::{self as sel, SelectionMode};
+use photostar_color::{BlendMode, Color};
+use photostar_doc::{
     ClippingPath, Document, Fill, FillRule, GradientStyle, Knot, Layer, LayerContent, LayerId, LineCap, LineJoin, LiveShape, NamedPath, Path, PathOp,
     ShapeLayer, ShapeStroke, StrokeAlign, Subpath, VectorMask,
 };
-use photocraft_geom::{Affine, Point, Rect};
-use photocraft_vector as vector;
+use photostar_geom::{Affine, Point, Rect};
+use photostar_vector as vector;
 use serde_json::{Value, json};
 
 use crate::commands::{CommandSpec, blend_from_str};
@@ -543,7 +543,7 @@ pub(crate) fn shift_shape(doc: &Document, sh: &mut ShapeLayer, dx: f64, dy: f64)
     let whole = |v: f64| (v.fract() == 0.0 && v.abs() <= f64::from(i32::MAX)).then_some(v as i32);
     let canvas = doc.bounds();
     let inside = sh.cache.as_ref().is_some_and(|c| {
-        let b = photocraft_compose::bounds::content_bounds(c);
+        let b = photostar_compose::bounds::content_bounds(c);
         // An empty cache can be an off-canvas shape moving back into view.
         !b.is_empty() && b.x0 > canvas.x0 && b.y0 > canvas.y0 && b.x1 < canvas.x1 && b.y1 < canvas.y1
     });
@@ -623,7 +623,7 @@ fn finite_path(path: &Path) -> bool {
 /// `path` through Distort / Perspective (`h`, a projective map of its points: exact for straight
 /// segments, the end tangents of curves exact) or, with `warp`, Warp (split where the warp bends
 /// it). Refused when the map sends a point to infinity (past a perspective's horizon).
-pub(crate) fn map_path(path: &Path, h: Option<&photocraft_algo::transform::Homography>, warp: Option<&photocraft_geom::warp::Warp>) -> Result<Path> {
+pub(crate) fn map_path(path: &Path, h: Option<&photostar_algo::transform::Homography>, warp: Option<&photostar_geom::warp::Warp>) -> Result<Path> {
     let out = match (h, warp) {
         (_, Some(w)) => vector::map::map_path(
             path,
@@ -648,7 +648,7 @@ pub(crate) fn map_path(path: &Path, h: Option<&photocraft_algo::transform::Homog
 /// Distort, Perspective or Warp of a shape layer (#3009): the shape stays a shape, its path
 /// mapped ([`map_path`]), as in Photoshop. A live rectangle, ellipse, polygon or line becomes a
 /// plain path, as its parameters can't describe the distorted outline.
-pub(crate) fn map_shape(sh: &mut ShapeLayer, h: Option<&photocraft_algo::transform::Homography>, warp: Option<&photocraft_geom::warp::Warp>) -> Result<()> {
+pub(crate) fn map_shape(sh: &mut ShapeLayer, h: Option<&photostar_algo::transform::Homography>, warp: Option<&photostar_geom::warp::Warp>) -> Result<()> {
     sh.path = map_path(&sh.path, h, warp)?;
     sh.live = None;
     sh.psd_raw = None;
@@ -833,7 +833,7 @@ fn shape_rasterize(s: &mut Session, p: &Value) -> Result<Value> {
             refresh_shape(&snapshot, sh);
         }
         let fmt = snapshot.pixel_format();
-        let surface = sh.cache.take().unwrap_or_else(|| photocraft_raster::Surface::new(fmt));
+        let surface = sh.cache.take().unwrap_or_else(|| photostar_raster::Surface::new(fmt));
         let surface = if surface.format() == fmt { surface } else { surface.convert(fmt) };
         l.content = LayerContent::Raster(surface);
         l.psd_blocks.retain(|(k, _)| !SHAPE_BLOCKS.contains(&k));
@@ -1018,8 +1018,8 @@ fn coords(p: &Value, key: &str, n: usize) -> Result<Option<Vec<f64>>> {
 enum PathMap {
     Affine(Affine),
     /// Distort / Perspective: the box's corners go to a quad.
-    Projective(photocraft_algo::transform::Homography),
-    Warp(Box<photocraft_geom::warp::Warp>),
+    Projective(photostar_algo::transform::Homography),
+    Warp(Box<photostar_geom::warp::Warp>),
 }
 
 fn path_transform(s: &mut Session, p: &Value) -> Result<Value> {
@@ -1053,7 +1053,7 @@ fn path_transform(s: &mut Session, p: &Value) -> Result<Value> {
     } else if let Some(q) = coords(p, "quad", 8)? {
         // Distort and Perspective (#3027): where the frame's corners go, clockwise from top-left.
         let quad = [[q[0], q[1]], [q[2], q[3]], [q[4], q[5]], [q[6], q[7]]];
-        let h = photocraft_algo::transform::Homography::rect_to_quad(frame(s)?, quad)
+        let h = photostar_algo::transform::Homography::rect_to_quad(frame(s)?, quad)
             .filter(|h| h.0.iter().all(|v| v.is_finite()) && h.inverse().is_some())
             .ok_or_else(|| bad(CMD, "degenerate quad"))?;
         let [a, b, c, d, e, f, g, hh, i] = h.0;
@@ -1257,7 +1257,7 @@ fn path_fill(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Composites `src` × coverage onto a surface over `area` (any pixel format).
-fn paint_coverage(surf: &mut photocraft_raster::Surface, area: Rect, cov: &[f32], src: [f32; 4], opacity: f32, mode: BlendMode, lock_alpha: bool) {
+fn paint_coverage(surf: &mut photostar_raster::Surface, area: Rect, cov: &[f32], src: [f32; 4], opacity: f32, mode: BlendMode, lock_alpha: bool) {
     let fmt = surf.format();
     let ch = fmt.channels();
     let mut vals = surf.read_region(area);
@@ -1265,12 +1265,12 @@ fn paint_coverage(surf: &mut photocraft_raster::Surface, area: Rect, cov: &[f32]
         if *c <= 0.0 {
             continue;
         }
-        let dst = photocraft_raster::to_rgba(&fmt, px);
-        let mut out = photocraft_compose::psblend::composite(mode, dst, [src[0], src[1], src[2], src[3] * c], opacity);
+        let dst = photostar_raster::to_rgba(&fmt, px);
+        let mut out = photostar_compose::psblend::composite(mode, dst, [src[0], src[1], src[2], src[3] * c], opacity);
         if lock_alpha {
             out[3] = dst[3];
         }
-        photocraft_raster::from_rgba_into(&fmt, out, px);
+        photostar_raster::from_rgba_into(&fmt, out, px);
     }
     surf.write_region(area, &vals);
     surf.prune();
@@ -1302,8 +1302,8 @@ const MAX_PRESSURE_POINTS: f64 = 200_000.0;
 /// Pressure) the subpath is resampled about every pixel and the pressure rises from 0 at its start
 /// to full at the middle and falls back to 0 at its end, so a brush whose size or opacity follows
 /// pen pressure tapers at both ends, as in Photoshop. Otherwise every point has full pressure.
-fn stroke_points(pts: &[(f64, f64)], closed: bool, simulate: bool) -> Vec<photocraft_paint::StrokePoint> {
-    use photocraft_paint::StrokePoint;
+fn stroke_points(pts: &[(f64, f64)], closed: bool, simulate: bool) -> Vec<photostar_paint::StrokePoint> {
+    use photostar_paint::StrokePoint;
     let mut line = pts.to_vec();
     if closed && let Some(&first) = pts.first() {
         line.push(first);
@@ -1391,7 +1391,7 @@ fn path_stroke(s: &mut Session, p: &Value) -> Result<Value> {
     }
     let base = s.tools.brush.clone();
     let fg = s.tools.foreground;
-    let mut brush = photocraft_paint::BrushSettings {
+    let mut brush = photostar_paint::BrushSettings {
         size: f64p(p, "size").map_or(base.size, |v| v as f32),
         hardness: f64p(p, "hardness").map_or(base.hardness, |v| v as f32),
         opacity: f64p(p, "opacity").map_or(base.opacity, |v| (v / 100.0) as f32),
@@ -1438,7 +1438,7 @@ fn path_stroke(s: &mut Session, p: &Value) -> Result<Value> {
             if pts.is_empty() {
                 continue;
             }
-            let r = photocraft_paint::apply_stroke(surf, &photocraft_paint::Stroke { brush: brush.clone(), points: pts }, sel.as_ref(), lock);
+            let r = photostar_paint::apply_stroke(surf, &photostar_paint::Stroke { brush: brush.clone(), points: pts }, sel.as_ref(), lock);
             dmg = if dmg.is_empty() { r } else { dmg.union(&r) };
         }
         Ok(dmg)
@@ -1584,7 +1584,7 @@ fn vector_mask_delete(s: &mut Session, p: &Value) -> Result<Value> {
 /// (either mask's) or the pixel mask's density shapes the rendered edge, the pixel mask instead
 /// becomes exactly what the compositor showed, with those settings baked in (#992).
 fn vector_mask_rasterize(s: &mut Session, p: &Value) -> Result<Value> {
-    use photocraft_compose::masks::{combined_mask, feather_sigma};
+    use photostar_compose::masks::{combined_mask, feather_sigma};
     let id = layer_id(s, p)?;
     s.edit("Rasterize Vector Mask", |doc, _| {
         let area = doc.bounds();
@@ -1596,15 +1596,14 @@ fn vector_mask_rasterize(s: &mut Session, p: &Value) -> Result<Value> {
         let shown = if soft { combined_mask(l, area) } else { None };
         let vm = l.vector_mask.take().ok_or_else(|| EngineError::Other("layer has no vector mask".into()))?;
         let mut mask = l.mask.take().unwrap_or_else(|| {
-            let mut m = photocraft_doc::LayerMask::reveal_all();
-            m.surface =
-                photocraft_raster::Surface::with_default(photocraft_color::PixelFormat::new(photocraft_color::ColorMode::Grayscale, depth, false), &[1.0]);
+            let mut m = photostar_doc::LayerMask::reveal_all();
+            m.surface = photostar_raster::Surface::with_default(photostar_color::PixelFormat::new(photostar_color::ColorMode::Grayscale, depth, false), &[1.0]);
             m
         });
         if let Some(shown) = shown {
             // Past the canvas the pixel mask keeps its own (density-applied) default, as below.
             let d = mask.surface.default_pixel().first().copied().unwrap_or(1.0);
-            let mut surface = photocraft_raster::Surface::with_default(mask.surface.format(), &[1.0 - mask.density * (1.0 - d)]);
+            let mut surface = photostar_raster::Surface::with_default(mask.surface.format(), &[1.0 - mask.density * (1.0 - d)]);
             surface.write_region(area, &shown.read_region(area));
             surface.prune();
             (mask.surface, mask.feather, mask.density) = (surface, 0.0, 1.0);

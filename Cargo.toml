@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
-default-members = ["crates/*", "apps/photocraft", "apps/photocraft-cli", "xtask"]
+default-members = ["crates/*", "apps/photostar", "apps/photostar-cli", "xtask"]
 
 [workspace.package]
 version = "0.16.0"
@@ -12,31 +12,31 @@ rust-version = "1.95"
 [workspace.dependencies]
 craft-ui = { git = "https://github.com/storytold/craft-libs", rev = "495e5971bc024aa96e6ed318cb6e7cd3a0103184", features = ["serde"] }
 # internal
-photocraft-geom = { path = "crates/geom" }
-photocraft-color = { path = "crates/color" }
-photocraft-cms = { path = "crates/cms" }
-photocraft-raster = { path = "crates/raster" }
-photocraft-doc = { path = "crates/doc" }
-photocraft-ops = { path = "crates/ops" }
-photocraft-psd = { path = "crates/psd" }
-photocraft-codecs = { path = "crates/codecs" }
-photocraft-raw = { path = "crates/raw" }
-photocraft-affinity = { path = "crates/affinity" }
-photocraft-compose = { path = "crates/compose" }
-photocraft-gpu = { path = "crates/gpu" }
-photocraft-paint = { path = "crates/paint" }
-photocraft-algo = { path = "crates/algo" }
-photocraft-io = { path = "crates/io" }
-photocraft-text = { path = "crates/text" }
-photocraft-vector = { path = "crates/vector" }
-photocraft-format = { path = "crates/format" }
-photocraft-automation = { path = "crates/automation" }
-photocraft-plugins = { path = "crates/plugins" }
-photocraft-engine = { path = "crates/engine" }
-photocraft-ui-egui = { path = "crates/ui-egui" }
-photocraft-testkit = { path = "crates/testkit" }
-photocraft-tablet = { path = "crates/tablet" }
-photocraft-ipp = { path = "crates/ipp" }
+photostar-geom = { path = "crates/geom" }
+photostar-color = { path = "crates/color" }
+photostar-cms = { path = "crates/cms" }
+photostar-raster = { path = "crates/raster" }
+photostar-doc = { path = "crates/doc" }
+photostar-ops = { path = "crates/ops" }
+photostar-psd = { path = "crates/psd" }
+photostar-codecs = { path = "crates/codecs" }
+photostar-raw = { path = "crates/raw" }
+photostar-affinity = { path = "crates/affinity" }
+photostar-compose = { path = "crates/compose" }
+photostar-gpu = { path = "crates/gpu" }
+photostar-paint = { path = "crates/paint" }
+photostar-algo = { path = "crates/algo" }
+photostar-io = { path = "crates/io" }
+photostar-text = { path = "crates/text" }
+photostar-vector = { path = "crates/vector" }
+photostar-format = { path = "crates/format" }
+photostar-automation = { path = "crates/automation" }
+photostar-plugins = { path = "crates/plugins" }
+photostar-engine = { path = "crates/engine" }
+photostar-ui-egui = { path = "crates/ui-egui" }
+photostar-testkit = { path = "crates/testkit" }
+photostar-tablet = { path = "crates/tablet" }
+photostar-ipp = { path = "crates/ipp" }
 
 # external
 craft-print = { git = "https://github.com/storytold/craft-libs", rev = "495e5971bc024aa96e6ed318cb6e7cd3a0103184" }
@@ -98,16 +98,16 @@ debug = "line-tables-only"
 # tests run no heavier pixel code of their own (that lives in the crates that stay optimized).
 # Measured on CI: Windows build 18.9 -> 15.4 min, test run 10.0 -> 10.5. `cargo run` and
 # `cargo build` use the dev profile and are unaffected.
-[profile.test.package.photocraft-ui-egui]
+[profile.test.package.photostar-ui-egui]
 opt-level = 0
 
 [profile.release]
 lto = "thin"
 codegen-units = 1
 
-# The browser build (apps/photocraft-web, `data-cargo-profile` in its index.html). Hosts cap the
+# The browser build (apps/photostar-web, `data-cargo-profile` in its index.html). Hosts cap the
 # size of a single file (Cloudflare Pages/Workers: 25 MiB), and the wasm is downloaded on every
-# visit, so this profile optimizes for size: fat LTO, opt-level "z" for PhotoCraft's own crates,
+# visit, so this profile optimizes for size: fat LTO, opt-level "z" for PhotoStar's own crates,
 # "s" for dependencies and for the crates that decode files, and 3 for pixel processing (filters
 # and compositing). Dependencies stay at "s": at "z" the whole wasm grows (by 0.4 MB, measured).
 # panic stays the target default (wasm32-unknown-unknown aborts; AGENTS.md's `panic = "unwind"`
@@ -123,25 +123,25 @@ strip = "debuginfo"
 opt-level = "s"
 
 # Decoding and rasterizing keep their speed.
-[profile.wasm-release.package.photocraft-codecs]
+[profile.wasm-release.package.photostar-codecs]
 opt-level = "s"
-[profile.wasm-release.package.photocraft-raw]
+[profile.wasm-release.package.photostar-raw]
 opt-level = "s"
-[profile.wasm-release.package.photocraft-heif]
+[profile.wasm-release.package.photostar-heif]
 opt-level = "s"
-[profile.wasm-release.package.photocraft-vector]
+[profile.wasm-release.package.photostar-vector]
 opt-level = "s"
 
 # Large crates off the per-frame and per-pixel paths: the document model, file parsers run once
 # per open/save, JSON (settings, presets, control channel), SVG parsing, and shader translation
 # (runs when a pipeline is created). "z" keeps the wasm well under the size gate.
-[profile.wasm-release.package.photocraft-doc]
+[profile.wasm-release.package.photostar-doc]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-psd]
+[profile.wasm-release.package.photostar-psd]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-format]
+[profile.wasm-release.package.photostar-format]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-affinity]
+[profile.wasm-release.package.photostar-affinity]
 opt-level = "z"
 [profile.wasm-release.package.serde_json]
 opt-level = "z"
@@ -166,17 +166,17 @@ opt-level = "z"
 # every interactive filter application; "z" there is the size lever of last resort (−331 KB),
 # taken because the gate is enforced in CI: if browser filters feel too slow, restore 3 here
 # and reclaim the bytes from a feature-gated decoder instead.
-[profile.wasm-release.package.photocraft-raster]
+[profile.wasm-release.package.photostar-raster]
 opt-level = 3
-[profile.wasm-release.package.photocraft-color]
+[profile.wasm-release.package.photostar-color]
 opt-level = 3
-[profile.wasm-release.package.photocraft-cms]
+[profile.wasm-release.package.photostar-cms]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-compose]
+[profile.wasm-release.package.photostar-compose]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-algo]
+[profile.wasm-release.package.photostar-algo]
 opt-level = "z"
-[profile.wasm-release.package.photocraft-paint]
+[profile.wasm-release.package.photostar-paint]
 opt-level = 3
 
 # Keep the complete egui family and native event bridge on reviewed fork commits.

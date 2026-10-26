@@ -48,8 +48,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::Read;
 use std::sync::{Arc, Mutex, PoisonError};
 
-use photocraft_paint::tile::PREVIEW_SIDE;
-use photocraft_paint::{BrushPreset, BrushSettings, GrayTile, Pattern, PresetCaptures, StoredTile, TipShape};
+use photostar_paint::tile::PREVIEW_SIDE;
+use photostar_paint::{BrushPreset, BrushSettings, GrayTile, Pattern, PresetCaptures, StoredTile, TipShape};
 use serde::{Deserialize, Serialize};
 
 use crate::Session;
@@ -87,7 +87,7 @@ pub const MAX_GROUPS: usize = 4096;
 /// Most presets loaded from one group file.
 pub const MAX_PRESETS_PER_GROUP: usize = 50_000;
 
-const GROUP_FORMAT: &str = "photocraft-brush-group";
+const GROUP_FORMAT: &str = "photostar-brush-group";
 const TIP_MAGIC: &[u8; 6] = b"PCTIP1";
 const TIP_HEADER: usize = 6 + 1 + 4 + 4;
 
@@ -216,7 +216,7 @@ impl PresetBackend for DirBackend {
         let path = self.path(name)?;
         let dir = path.parent().ok_or_else(|| format!("{name}: no parent directory"))?;
         std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-        photocraft_format::atomic_write(&path, bytes).map_err(|e| format!("{name}: {e}"))
+        photostar_format::atomic_write(&path, bytes).map_err(|e| format!("{name}: {e}"))
     }
     fn remove(&self, name: &str) -> Result<(), String> {
         match std::fs::remove_file(self.path(name)?) {
@@ -283,7 +283,7 @@ pub fn decode_tip(bytes: &[u8]) -> Result<GrayTile, String> {
 fn decode_tip_max(bytes: &[u8], max_side: u32) -> Result<GrayTile, String> {
     let head = bytes.get(..TIP_HEADER).ok_or("truncated tip header")?;
     if &head[..6] != TIP_MAGIC {
-        return Err("not a PhotoCraft tip".into());
+        return Err("not a PhotoStar tip".into());
     }
     let bits = head[6];
     let u32_at = |i: usize| u32::from_le_bytes([head[i], head[i + 1], head[i + 2], head[i + 3]]);
@@ -582,7 +582,7 @@ pub struct Opened {
     /// Recorded actions (`actions.json`). Empty when the file is missing or unreadable.
     pub actions: Vec<crate::actions_cmds::Action>,
     /// User patterns (`patterns.pat`), in library order. Empty when the file is missing or unreadable.
-    pub patterns: Vec<photocraft_doc::Pattern>,
+    pub patterns: Vec<photostar_doc::Pattern>,
 }
 
 /// Load a store (any thread; the desktop app does this in the background at start).
@@ -735,7 +735,7 @@ pub fn open(backend: Box<dyn PresetBackend>) -> Opened {
 
 /// `patterns.pat`: a missing file is no patterns. Anything else unreadable is a warning.
 /// The saved patterns; `None` when `patterns.pat` exists but could not be loaded.
-fn load_patterns(backend: &dyn PresetBackend, warnings: &mut Vec<String>) -> Option<Vec<photocraft_doc::Pattern>> {
+fn load_patterns(backend: &dyn PresetBackend, warnings: &mut Vec<String>) -> Option<Vec<photostar_doc::Pattern>> {
     let bytes = match backend.read(PATTERNS_FILE, MAX_PATTERNS_BYTES) {
         Ok(b) => b,
         Err(e) if missing_file(&e) => return Some(Vec::new()),
@@ -744,7 +744,7 @@ fn load_patterns(backend: &dyn PresetBackend, warnings: &mut Vec<String>) -> Opt
             return None;
         }
     };
-    match photocraft_io::pattern_map::read_pat(&bytes) {
+    match photostar_io::pattern_map::read_pat(&bytes) {
         Ok(p) => Some(p),
         Err(e) => {
             warnings.push(format!("patterns: {PATTERNS_FILE} skipped: {e}"));
@@ -756,7 +756,7 @@ fn load_patterns(backend: &dyn PresetBackend, warnings: &mut Vec<String>) -> Opt
 /// What decides whether the user patterns need rewriting: their ids, names, sizes and order, and
 /// the library's [`pixels_rev`](crate::pattern_cmds::PatternLibrary::pixels_rev) (pixels replaced
 /// under the same id).
-fn patterns_key(patterns: &[photocraft_doc::Pattern], pixels_rev: u64) -> u64 {
+fn patterns_key(patterns: &[photostar_doc::Pattern], pixels_rev: u64) -> u64 {
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
     for p in patterns {
@@ -1133,9 +1133,9 @@ impl PresetStore {
     /// Write the user patterns (the library minus the built-ins) when they changed since the last
     /// load or write. An oversized library is warned once per change and not written. An I/O
     /// error is warned and retried on the next command.
-    pub fn sync_patterns(&mut self, library: &[photocraft_doc::Pattern], pixels_rev: u64) {
+    pub fn sync_patterns(&mut self, library: &[photostar_doc::Pattern], pixels_rev: u64) {
         let builtins = crate::pattern_cmds::builtin();
-        let user: Vec<photocraft_doc::Pattern> = library.iter().filter(|p| !crate::pattern_cmds::is_pristine_builtin(p, &builtins)).cloned().collect();
+        let user: Vec<photostar_doc::Pattern> = library.iter().filter(|p| !crate::pattern_cmds::is_pristine_builtin(p, &builtins)).cloned().collect();
         let key = patterns_key(&user, pixels_rev);
         if self.patterns_key == key {
             return;
@@ -1153,7 +1153,7 @@ impl PresetStore {
             }
             return;
         }
-        let bytes = match photocraft_io::pattern_map::write_pat(&user) {
+        let bytes = match photostar_io::pattern_map::write_pat(&user) {
             Ok(b) => b,
             Err(e) => {
                 self.warnings.push(format!("Couldn't save patterns: {e}"));
@@ -1174,7 +1174,7 @@ impl PresetStore {
 
 fn builtin_names() -> &'static [String] {
     static NAMES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
-    NAMES.get_or_init(|| photocraft_paint::presets::builtin().into_iter().map(|p| p.name).collect())
+    NAMES.get_or_init(|| photostar_paint::presets::builtin().into_iter().map(|p| p.name).collect())
 }
 
 impl Session {

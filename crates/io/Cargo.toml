@@ -1,6 +1,6 @@
 [package]
-name = "photocraft-io"
-description = "Import/export between photocraft documents and PSD/PSB and flat raster formats"
+name = "photostar-io"
+description = "Import/export between photostar documents and PSD/PSB and flat raster formats"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,25 +12,25 @@ workspace = true
 [features]
 # Real-file corpus tests (opt-in; `cargo xtask test-corpus`). Fail when the corpus is missing.
 corpus = []
-# HEIC/HEIF decode (forwarded to photocraft-codecs; see its `heif` feature).
-heif = ["photocraft-codecs/heif"]
+# HEIC/HEIF decode (forwarded to photostar-codecs; see its `heif` feature).
+heif = ["photostar-codecs/heif"]
 
 [dependencies]
-photocraft-geom = { workspace = true }
-photocraft-color = { workspace = true }
-photocraft-cms = { workspace = true }
-photocraft-raster = { workspace = true }
-photocraft-doc = { workspace = true }
-photocraft-compose = { workspace = true }
-photocraft-algo = { workspace = true }
-photocraft-psd = { workspace = true }
-photocraft-codecs = { workspace = true }
-photocraft-raw = { workspace = true }
-photocraft-affinity = { workspace = true }
-photocraft-text = { workspace = true }
-photocraft-paint = { workspace = true }
-photocraft-vector = { workspace = true }
-photocraft-format = { path = "../format" }
+photostar-geom = { workspace = true }
+photostar-color = { workspace = true }
+photostar-cms = { workspace = true }
+photostar-raster = { workspace = true }
+photostar-doc = { workspace = true }
+photostar-compose = { workspace = true }
+photostar-algo = { workspace = true }
+photostar-psd = { workspace = true }
+photostar-codecs = { workspace = true }
+photostar-raw = { workspace = true }
+photostar-affinity = { workspace = true }
+photostar-text = { workspace = true }
+photostar-paint = { workspace = true }
+photostar-vector = { workspace = true }
+photostar-format = { path = "../format" }
 craft-docpath = { workspace = true }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
@@ -50,13 +50,13 @@ resvg = { version = "0.45", default-features = false, features = ["text", "raste
 
 [dev-dependencies]
 crc32fast = "1.5"
-photocraft-affinity = { workspace = true, features = ["synth"] }
+photostar-affinity = { workspace = true, features = ["synth"] }
 flate2 = { workspace = true }
-photocraft-psd = { workspace = true, features = ["testgen"] }
-photocraft-raw = { workspace = true, features = ["testgen"] }
-photocraft-testkit = { workspace = true }
+photostar-psd = { workspace = true, features = ["testgen"] }
+photostar-raw = { workspace = true, features = ["testgen"] }
+photostar-testkit = { workspace = true }
 proptest = { workspace = true }
-# Lossless JPEG XL encoder for the JPEG XL DNG preview test (tests only), as in photocraft-raw.
+# Lossless JPEG XL encoder for the JPEG XL DNG preview test (tests only), as in photostar-raw.
 zune-jpegxl = { version = "=0.5.2", default-features = false, features = ["std"] }
 zune-core = { workspace = true }
 tiff = { version = "0.11", default-features = false, features = ["deflate", "lzw"] }

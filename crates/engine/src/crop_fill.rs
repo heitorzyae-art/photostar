@@ -14,9 +14,9 @@
 //! filled over; a straight crop fills all of the area past the old canvas, them included, as
 //! Photoshop does (#8060).
 
-use photocraft_doc::{Document, LayerId};
-use photocraft_geom::Rect;
-use photocraft_raster::Surface;
+use photostar_doc::{Document, LayerId};
+use photostar_geom::Rect;
+use photostar_raster::Surface;
 use rayon::prelude::*;
 
 use crate::{EngineError, Result};
@@ -174,7 +174,7 @@ fn target_layer(doc: &Document, active: Option<LayerId>) -> Result<LayerId> {
         return Ok(bg.id);
     }
     active
-        .filter(|id| doc.layer(*id).is_some_and(|l| matches!(l.content, photocraft_doc::LayerContent::Raster(_))))
+        .filter(|id| doc.layer(*id).is_some_and(|l| matches!(l.content, photostar_doc::LayerContent::Raster(_))))
         .ok_or_else(|| EngineError::Other("Content-Aware crop fill needs a Background or an active pixel layer".into()))
 }
 

@@ -4,9 +4,9 @@ use crate::common;
 use std::sync::Arc;
 
 use common::*;
-use photocraft_color::{ColorMode, SampleType};
-use photocraft_doc::{DocId, Document};
-use photocraft_format::*;
+use photostar_color::{ColorMode, SampleType};
+use photostar_doc::{DocId, Document};
+use photostar_format::*;
 
 #[test]
 fn autosave_then_recover() {

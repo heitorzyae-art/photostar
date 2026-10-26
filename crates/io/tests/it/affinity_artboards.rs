@@ -5,10 +5,10 @@
 mod fixture;
 
 use fixture::{Marker, document};
-use photocraft_affinity::synth::Method;
-use photocraft_doc::Document;
-use photocraft_geom::Rect;
-use photocraft_io::{ExportOptions, export, import};
+use photostar_affinity::synth::Method;
+use photostar_doc::Document;
+use photostar_geom::Rect;
+use photostar_io::{ExportOptions, export, import};
 
 fn boards(doc: &Document) -> Vec<(String, Rect)> {
     doc.artboards().into_iter().map(|(_, name, a)| (name.to_string(), a.rect)).collect()
@@ -16,7 +16,7 @@ fn boards(doc: &Document) -> Vec<(String, Rect)> {
 
 fn pixels(doc: &Document) -> Vec<u8> {
     let bytes = export(doc, "boards.png", &ExportOptions::default()).unwrap().bytes;
-    photocraft_codecs::decode(&bytes).unwrap().data().to_vec()
+    photostar_codecs::decode(&bytes).unwrap().data().to_vec()
 }
 
 #[test]

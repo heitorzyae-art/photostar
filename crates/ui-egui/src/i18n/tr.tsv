@@ -4,7 +4,7 @@
 # Clean-room: every entry was written from the plain meaning of the English label using ordinary
 # Turkish computing vocabulary (katman, seçim, maske, ayar katmanı, fırça, degrade ...). No
 # proprietary localisation resource, string table or product UI was consulted or copied; add
-# entries the same way. Product and technology names (PhotoCraft, ArtCraft, OpenType, CMYK, Lab ...)
+# entries the same way. Product and technology names (PhotoStar, ArtCraft, OpenType, CMYK, Lab ...)
 # stay as they are; the trailing "…" of dialog commands is kept.
 #
 # Custom paper dimensions in Print Settings.
@@ -765,9 +765,9 @@
 	Timeline	Zaman Çizelgesi
 	Tool Presets	Araç Ön Ayarları
 	Tools	Araçlar
-	About PhotoCraft	PhotoCraft Hakkında
-	PhotoCraft Website	PhotoCraft Web Sitesi
-	PhotoCraft on GitHub	GitHub'da PhotoCraft
+	About PhotoStar	PhotoStar Hakkında
+	PhotoStar Website	PhotoStar Web Sitesi
+	PhotoStar on GitHub	GitHub'da PhotoStar
 	ArtCraft Website	ArtCraft Web Sitesi
 	Join the ArtCraft Discord…	ArtCraft Discord'una Katıl…
 	Report an Issue…	Sorun Bildir…
@@ -821,7 +821,7 @@
 	All Caps	Tamamı Büyük Harf
 	All Slices	Tüm Dilimler
 	All User Slices	Tüm Kullanıcı Dilimleri
-	All shortcuts reset to PhotoCraft defaults.	Tüm kısayollar PhotoCraft varsayılanlarına sıfırlanır.
+	All shortcuts reset to PhotoStar defaults.	Tüm kısayollar PhotoStar varsayılanlarına sıfırlanır.
 	Alt	Alt
 	Always use pressure for opacity	Opaklık için her zaman basıncı kullan
 	Always use pressure for size	Boyut için her zaman basıncı kullan
@@ -1067,8 +1067,8 @@
 	Drop an image or PSD anywhere to open it.	Açmak için bir görüntüyü veya PSD'yi herhangi bir yere bırakın.
 	Native file drag-and-drop is unavailable	Yerel dosya sürükle ve bırak özelliği kullanılamıyor
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or copy the image in your file manager and paste it with {paste}.	Yerel dosya sürükle ve bırak özelliği henüz Wayland'de desteklenmiyor. Dosya › Aç'ı kullanın veya görüntüyü dosya yöneticinizde kopyalayıp {paste} ile yapıştırın.
-	To drop files, start PhotoCraft under XWayland: `{command}`	Dosyaları bırakmak için XWayland altında PhotoCraft'ı başlatın: `{command}`
-	Or set Preferences › Performance › Linux display server to X11: PhotoCraft then always starts under XWayland.	Veya Tercihler › Performans › Linux görüntüleme sunucusunu X11 olarak ayarlayın: PhotoCraft bundan sonra her zaman XWayland altında başlar.
+	To drop files, start PhotoStar under XWayland: `{command}`	Dosyaları bırakmak için XWayland altında PhotoStar'ı başlatın: `{command}`
+	Or set Preferences › Performance › Linux display server to X11: PhotoStar then always starts under XWayland.	Veya Tercihler › Performans › Linux görüntüleme sunucusunu X11 olarak ayarlayın: PhotoStar bundan sonra her zaman XWayland altında başlar.
 	Edit › Paste	Düzenle › Yapıştır
 	Duplicate Layers…	Katmanları Çoğalt…
 	Duplicate style	Stili çoğalt
@@ -1315,9 +1315,9 @@
 	Perspective Warp is not active	Perspektif Çarpıtma etkin değil
 	Perspective Warp: draw planes along the image's perspective, then switch to Warp	Perspektif Çarpıtma: görüntünün perspektifi boyunca düzlemler çizin, ardından Çarpıtma'ya geçin
 	Photo Filter	Fotoğraf Filtresi
-	PhotoCraft	PhotoCraft
-	PhotoCraft Manages Colors	PhotoCraft Renkleri Yönetir
-	PhotoCraft — an open-source, native image editor written in Rust.	PhotoCraft — Rust'ta yazılmış açık kaynaklı, yerel bir görüntü düzenleyici.
+	PhotoStar	PhotoStar
+	PhotoStar Manages Colors	PhotoStar Renkleri Yönetir
+	PhotoStar — an open-source, native image editor written in Rust.	PhotoStar — Rust'ta yazılmış açık kaynaklı, yerel bir görüntü düzenleyici.
 	Pin Depth:	Pim Derinliği:
 	Pixel Length:	Piksel Uzunluğu:
 	Pixels/Centimeter	Piksel/Santimetre
@@ -1392,11 +1392,11 @@
 	Import Shortcuts…	Kısayolları İçe Aktar…
 	Load a keyboard shortcut set saved as .kys	.kys olarak kaydedilen bir klavye kısayolu kümesi yükleyin
 	Imported {n} shortcuts from {file}. Click OK to keep them.	{n} kısayol {file} dosyasından içe aktarıldı. Saklamak için Tamam'a tıklayın.
-	{n} commands are not in PhotoCraft.	{n} komut PhotoCraft'ta yok.
+	{n} commands are not in PhotoStar.	{n} komut PhotoStar'ta yok.
 	Keyboard shortcuts imported	Klavye kısayolları içe aktarıldı
 	Your keyboard shortcut set {set} is in use here: {n} shortcuts differ from the defaults. Edit › Keyboard Shortcuts shows them; Reset All to Defaults undoes this.	{set} klavye kısayol setiniz burada kullanılıyor: {n} kısayol varsayılanlardan farklı. Düzenle › Klavye Kısayolları bunları gösterir; Tümünü Varsayılanlara Sıfırla bu işlemi geri alır.
 	Import keyboard shortcuts?	Klavye kısayolları içe aktarılsın mı?
-	PhotoCraft found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoCraft's. Import it?	PhotoCraft, bu bilgisayardaki başka bir görüntü düzenleyicide {set} klavye kısayol setinizi buldu: {n} kısayol PhotoCraft'tan farklı. İçe aktarılsın mı?
+	PhotoStar found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoStar's. Import it?	PhotoStar, bu bilgisayardaki başka bir görüntü düzenleyicide {set} klavye kısayol setinizi buldu: {n} kısayol PhotoStar'tan farklı. İçe aktarılsın mı?
 	Edit › Keyboard Shortcuts › Reset All to Defaults undoes an import.	Düzenle › Klavye Kısayolları › Tümünü Varsayılanlara Sıfırla, içe aktarma işlemini geri alır.
 	Don't Import	İçe Aktarma
 	The keyboard shortcut set was not imported: {error}	Klavye kısayol seti içe aktarılmadı: {error}
@@ -1619,7 +1619,7 @@
 	Current Tool	Geçerli Araç
 	Custom Shape Tool	Özel Şekil Aracı
 	Cyans	Camgöbeği
-	Default PhotoCraft Size	Varsayılan PhotoCraft Boyutu
+	Default PhotoStar Size	Varsayılan PhotoStar Boyutu
 	Delete Workspace	Çalışma Alanını Sil
 	Diamond	Elmas
 	Dimensions:	Ölçüler:
@@ -1730,7 +1730,7 @@
 	Pen Tool	Kalem Aracı
 	Convert Point Tool	Nokta Dönüştürme Aracı
 	Photo	Fotoğraf
-	PhotoCraft website	PhotoCraft web sitesi
+	PhotoStar website	PhotoStar web sitesi
 	Picas	Pikalar
 	Pillow Emboss	Yastık Kabartma
 	Pixel Replacement	Piksel Değiştirme
@@ -2058,7 +2058,7 @@
 	System Info	Sistem Bilgisi
 	More panels	Daha fazla panel
 	More documents	Daha fazla belge
-	These settings aren't available in PhotoCraft yet.	Bu ayarlar henüz PhotoCraft'ta mevcut değildir.
+	These settings aren't available in PhotoStar yet.	Bu ayarlar henüz PhotoStar'ta mevcut değildir.
 	Graphics	Grafik
 	Reset GPU Backend	GPU Arka Ucunu Sıfırla
 	Applies at next launch.	Bir sonraki açılışta geçerlidir.
@@ -2268,7 +2268,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Otomatik, mümkün olduğunda GPU hızlandırmayı kullanır ve hatalarda CPU oluşturmaya geri döner.
 	Switched to CPU rendering	CPU oluşturmaya geçildi
 	GPU acceleration could not continue. Your documents are unchanged.	GPU hızlandırması devam edemedi. Belgeleriniz değişmedi.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft, CPU görüntü birleştiricisini kullanıyor. Pencere yine de grafik bağdaştırıcınızı kullanıyor olabilir.
+	PhotoStar is using the CPU image compositor. The window may still use your graphics adapter.	PhotoStar, CPU görüntü birleştiricisini kullanıyor. Pencere yine de grafik bağdaştırıcınızı kullanıyor olabilir.
 	Retry GPU requires a restart. Save your work first.	GPU'yu yeniden dene, yeniden başlatma gerektirir. Öncelikle çalışmanızı kaydedin.
 	Keep Using CPU	CPU'yu Kullanmaya Devam Et
 	Retry GPU tries the graphics processor again now.	GPU'yu yeniden dene, grafik işlemciyi hemen yeniden dener.
@@ -2656,7 +2656,7 @@ cameraRaw	Color	Renk
 	Restart Required	Yeniden Başlatma Gerekli
 	Restart	Yeniden başlat
 	Quit	Çıkış
-	Quit PhotoCraft	PhotoCraft'tan Çık
+	Quit PhotoStar	PhotoStar'tan Çık
 	Close Window	Pencereyi Kapat
 	New Window	Yeni Pencere
 	Open Image	Görüntüyü Aç
@@ -3436,7 +3436,7 @@ cameraRaw	Color	Renk
 	Modify Date	Değiştirilme Tarihi
 	Mosaic	Mozaik
 	Motion Blur	Hareket Bulanıklığı
-	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or run PhotoCraft under XWayland with `WAYLAND_DISPLAY= photocraft`.	Yerel dosya sürükle ve bırak özelliği henüz Wayland'de desteklenmiyor. Dosya › Aç'ı kullanın veya PhotoCraft'ı XWayland altında `WAYLAND_DISPLAY= photocraft` ile çalıştırın.
+	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or run PhotoStar under XWayland with `WAYLAND_DISPLAY= photostar`.	Yerel dosya sürükle ve bırak özelliği henüz Wayland'de desteklenmiyor. Dosya › Aç'ı kullanın veya PhotoStar'ı XWayland altında `WAYLAND_DISPLAY= photostar` ile çalıştırın.
 	Neon Glow	Neon Işıma
 	New Guide Layout	Yeni Kılavuz Düzeni
 	New Path	Yeni Yol
@@ -3795,7 +3795,7 @@ cameraData	Lens	Lens
 	There is no crop size or ratio to save	Kaydedilecek kırpma boyutu veya oranı yok
 	Search settings…	Arama ayarları…
 	No matching settings	Eşleşen ayar yok
-	PhotoCraft — Screen Color Picker	PhotoCraft — Ekran Rengi Seçici
+	PhotoStar — Screen Color Picker	PhotoStar — Ekran Rengi Seçici
 	Loading fonts…	Yazı tipleri yükleniyor…
 	Onion Skin	Soğan Kabuğu
 	Marching Ants	Yürüyen Karıncalar
@@ -3907,7 +3907,7 @@ cameraData	Lens	Lens
 	{name} (Photoshop)	{name} (Photoshop)
 	{message} ({note})	{message} ({note})
 @plural	Loaded {n} action from {file}|Loaded {n} actions from {file}	{file} dosyasından {n} eylem yüklendi
-@plural	{n} step has no PhotoCraft equivalent yet|{n} steps have no PhotoCraft equivalent yet	{n} adımın PhotoCraft’ta henüz karşılığı yok
+@plural	{n} step has no PhotoStar equivalent yet|{n} steps have no PhotoStar equivalent yet	{n} adımın PhotoStar’ta henüz karşılığı yok
 @plural	Saved {n} action to {file}|Saved {n} actions to {file}	{n} eylem {file} dosyasına kaydedildi
 @plural	{n} step with no Photoshop equivalent left out|{n} steps with no Photoshop equivalent left out	Photoshop karşılığı olmayan {n} adım atlandı
 
@@ -3974,17 +3974,17 @@ cameraData	Lens	Lens
 	Shadow Color	Gölge Rengi
 	Shadow Opacity	Gölge Opaklığı
 	Check for Updates…	Güncellemeleri Denetle…
-	PhotoCraft Updates	PhotoCraft Güncellemeleri
+	PhotoStar Updates	PhotoStar Güncellemeleri
 	Checking for updates…	Güncellemeler denetleniyor…
 	Open the release page to choose an installer for your system.	Sisteminize uygun yükleyiciyi seçmek için sürüm sayfasını açın.
 	Open Download Page	İndirme Sayfasını Aç
-	PhotoCraft is up to date.	PhotoCraft güncel.
+	PhotoStar is up to date.	PhotoStar güncel.
 	Could not check for updates.	Güncellemeler denetlenemedi.
 	Updates have not been checked yet.	Güncellemeler henüz denetlenmedi.
 	Check Again	Yeniden Denetle
 	Automatically Check for Updates	Güncellemeleri Otomatik Denetle
 	Installed version: {version}	Yüklü sürüm: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} kullanılabilir.
+	PhotoStar {version} is available.	PhotoStar {version} kullanılabilir.
 # Embedded Profile Mismatch: profile names beside the choices, Remember this choice
 	Use the embedded profile ({profile})	Gömülü profili kullanın ({profile})
 	Convert to the working space ({profile})	Çalışma alanına dönüştürün ({profile})
@@ -4010,12 +4010,12 @@ cameraData	Lens	Lens
 	Bicubic Smoother	Bikübik Pürüzsüzleştirici
 	Bicubic Sharper	Bikübik Daha Keskin
 	Pasting from other apps is unavailable	Diğer uygulamalardan yapıştırma kullanılamıyor
-	PhotoCraft can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoCraft bu oturumda sistem panosuna erişemiyor. Wayland'de Flatpak korumalı alanı, diğer uygulamalardaki görüntülerin okunduğu protokolü gizler.
-	To paste from other apps, start PhotoCraft under XWayland: `{command}`	Diğer uygulamalardan yapıştırmak için PhotoCraft'ı XWayland altında başlatın: `{command}`
-	Nothing to paste: PhotoCraft can't read the system clipboard here	Yapıştırılacak bir şey yok: PhotoCraft burada sistem panosunu okuyamıyor
+	PhotoStar can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoStar bu oturumda sistem panosuna erişemiyor. Wayland'de Flatpak korumalı alanı, diğer uygulamalardaki görüntülerin okunduğu protokolü gizler.
+	To paste from other apps, start PhotoStar under XWayland: `{command}`	Diğer uygulamalardan yapıştırmak için PhotoStar'ı XWayland altında başlatın: `{command}`
+	Nothing to paste: PhotoStar can't read the system clipboard here	Yapıştırılacak bir şey yok: PhotoStar burada sistem panosunu okuyamıyor
 	Delete this set	Bu Kümeyi Sil
 	New Set…	Yeni Küme…
-	PhotoCraft Defaults	PhotoCraft Varsayılanları
+	PhotoStar Defaults	PhotoStar Varsayılanları
 	Save a list of these shortcuts as a web page	Bu kısayolların listesini web sayfası olarak kaydet
 	Save the changes to this set	Bu kümedeki değişiklikleri kaydet
 	Save these shortcuts as a .kys file	Bu kısayolları .kys dosyası olarak kaydet
