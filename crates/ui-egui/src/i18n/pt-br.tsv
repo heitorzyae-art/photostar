@@ -12,7 +12,7 @@
 # Clean-room: every entry was written from the plain meaning of the English label using ordinary
 # Brazilian Portuguese computing vocabulary (camada, desfoque, seleção, demarcador ...). No
 # proprietary localisation resource, string table or product UI was consulted or copied; add
-# entries the same way. Product and technology names (PhotoStar, ArtCraft, OpenType, CMYK, Lab ...)
+# entries the same way. Product and technology names (PhotoStar, ArtStar, OpenType, CMYK, Lab ...)
 # stay as they are; the trailing "…" of dialog commands is kept.
 
 # Layer Mask Display Options (the layer mask rubylith's colour and opacity)
@@ -783,10 +783,7 @@
 	Tool Presets	Predefinições de ferramentas
 	Tools	Ferramentas
 	About PhotoStar	Sobre o PhotoStar
-	PhotoStar Website	Site do PhotoStar
 	PhotoStar on GitHub	PhotoStar no GitHub
-	ArtCraft Website	Site do ArtCraft
-	Join the ArtCraft Discord…	Participe do Discord do ArtCraft…
 	Report an Issue…	Relatar um problema…
 	WIA Support…	Suporte a WIA…
 	Apply	Aplicar
@@ -1074,7 +1071,6 @@
 	Diffusion	Difusão
 	Discard the embedded profile (don't color manage)	Descartar o perfil incorporado (não gerenciar cores)
 	Discontiguous	Não contíguo
-	Discord	Discord
 	Dismiss	Dispensar
 	Display P3	Display P3
 	Display Text	Texto de exibição
@@ -1203,7 +1199,6 @@
 	Invert All	Inverter tudo
 	Invert has no settings.	Inverter não tem configurações.
 	Italic	Itálico
-	Join us on Discord	Participe do nosso Discord
 	Justify all	Justificar tudo
 	Justify last centered	Justificar com a última linha centralizada
 	Justify last left	Justificar com a última linha à esquerda
@@ -1607,7 +1602,6 @@
 	Apple Watch 45mm	Apple Watch 45mm
 	Aqua	Aqua
 	Art & Illustration	Arte e ilustração
-	ArtCraft	ArtCraft
 	Background Eraser Tool	Ferramenta Borracha de plano de fundo
 	Bevel & Emboss	Chanfro e entalhe
 	Blend Mode	Modo de mesclagem
@@ -1754,7 +1748,6 @@
 	Pen Tool	Ferramenta Caneta
 	Convert Point Tool	Ferramenta Converter ponto
 	Photo	Foto
-	PhotoStar website	Site do PhotoStar
 	Picas	Paicas
 	Pillow Emboss	Entalhe almofadado
 	Pixel Replacement	Substituição de pixels
@@ -3540,7 +3533,6 @@ layerLabel	No Color	Sem cor
 	Custom Pixel Aspect Ratio	Proporção de pixel personalizada
 	32-bit Preview Options	Opções de visualização de 32 bits
 	New Guide	Nova guia
-	Join the ArtCraft Discord	Entrar no Discord do ArtCraft
 	Report an Issue	Relatar um problema
 	Load Files into Stack	Carregar arquivos em pilha
 	Statistics	Estatísticas

@@ -1,6 +1,6 @@
 # Credits
 
-PhotoStar is created and maintained by the ArtCraft team and PhotoStar contributors. Project ownership, copyright, and licensing remain as stated in the repository's `README.md`, `NOTICE`, and license files. Every merged contribution is credited in the repository history and release notes.
+PhotoStar is maintained by the ArtStar team and PhotoStar contributors. It is based on PhotoCraft, created by the ArtCraft team and the PhotoCraft contributors. Project ownership, copyright, and licensing remain as stated in the repository's `README.md`, `NOTICE`, and license files. Every merged contribution is credited in the repository history and release notes.
 
 ## Documentation
 

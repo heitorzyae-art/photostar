@@ -1,11 +1,11 @@
 ---
 title: Install PhotoStar
-description: Download PhotoStar for Windows 10 or 11, macOS or Linux from getartcraft.com or GitHub, or install it with ArtCraft Launcher.
+description: Get PhotoStar for Windows 10 or 11, macOS or Linux from a release build or by building it from source.
 order: 10
 verified: 0.8.2
 ---
 
-The easiest way is the [PhotoStar page on getartcraft.com](https://getartcraft.com/apps/photocraft). You can also install it with [ArtCraft Launcher](https://getartcraft.com/docs/craft-launcher/guides/install-and-update-apps), which lists PhotoStar. For a specific build or file format, take it from the [latest release](https://github.com/storytold/photocraft/releases/latest) on GitHub. In the file names below, `<version>` stands for the version number, for example `0.8.2`.
+Take a build from the releases page of the repository you got PhotoStar from, or build it from source (see the README). In the file names below, `<version>` stands for the version number, for example `0.8.2`.
 
 ## Windows
 

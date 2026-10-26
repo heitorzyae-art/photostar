@@ -1,8 +1,8 @@
 # PhotoStar app icon
 
-A **nine-tailed kitsune with a brow diamond**: an engraving portrait, seated, looking back at the
-viewer, in the Crafting Apps' owl-template framing (full-bleed field, head and body filling the
-tile, tails running off the edges).
+A **camera with a star on its prism**: an engraving-style drawing, seen from the front, filling the
+tile (full-bleed field, body and lens filling the frame, neck straps running off the edges). The
+line work is hatching, knurling and stipple; the star on the prism is the "Star" in PhotoStar.
 
 ## Palette
 
@@ -22,14 +22,15 @@ each side so the figure reads at 16–48 px.
 
 ## Provenance
 
-The owner's original drawing, made in ArtCraft (2880 px, engraving style, keyed to the palette),
-vectorised with craftrules `assets/logo-options/_tools/vectorize_tile.py`. The source PNG stays in
-craftrules at `assets/app-icons/photostar/source.png`. License: see `LICENSE.txt`.
+Original artwork drawn as code by an AI assistant (Claude) for the PhotoStar fork, in the style of
+the icon it replaces. `make_icon.py` in this directory writes `photostar.svg`; nothing is traced
+from, or copied out of, another work. This replaces PhotoCraft's earlier fox icon. License: see
+`LICENSE.txt`.
 
 ## Files
 
-- `photostar.svg`: canonical master (traced at 2048 px).
-- `photostar-small.svg`: lighter trace (traced at 1024 px); also the hicolor scalable icon.
+- `photostar.svg`: canonical master, written by `make_icon.py`.
+- `photostar-small.svg`: same drawing; also the hicolor scalable icon.
 - `photostar-1024.png`: 1024 px render on the macOS grid.
 - `photostar.icns`: macOS bundle icon (`CFBundleIconFile`).
 - `photostar.ico`: Windows icon, 16–256 px, embedded in the `.exe` by `apps/photostar/build.rs`.
@@ -43,5 +44,6 @@ details and tests the `.ico` sizes and the WiX icon references.
 
 ## Regenerate
 
-Replace `photostar.svg` (and `photostar-small.svg`), then run `packaging/icons.sh`. It needs
-`resvg`, plus `iconutil` on macOS; the `.ico` is packed by `cargo xtask ico`.
+Edit `make_icon.py` and run `python3 assets/app-icon/make_icon.py assets/app-icon/photostar.svg`
+(copy the result to `photostar-small.svg`), then run `packaging/icons.sh`. It needs `resvg`, plus
+`iconutil` on macOS; the `.ico` is packed by `cargo xtask ico`.
