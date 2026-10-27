@@ -22,6 +22,6 @@ pub fn service() -> CheckFn {
 
 fn check() -> CheckResult {
     let http = craft_update::Http::new("PhotoStar/Update")?;
-    let found = craft_update::check_for_update(&craft_update::suite::PHOTOSTAR, &http, photostar_engine::build_info::VERSION)?;
+    let found = craft_update::check_for_update(&photostar_ui_egui::updates_ui::APP, &http, photostar_engine::build_info::VERSION)?;
     Ok(found.map(|release| Release { version: release.tag.trim_start_matches(['v', 'V']).to_string(), url: release.html_url }))
 }

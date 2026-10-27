@@ -198,7 +198,7 @@ fn main() -> eframe::Result {
     let logger = logging::install();
     crash_guard::install_hook();
     #[cfg(not(target_arch = "wasm32"))]
-    if let Some(done) = craft_update::self_update::finish(&craft_update::suite::PHOTOSTAR, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
+    if let Some(done) = craft_update::self_update::finish(&photostar_ui_egui::updates_ui::APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
         if let Err(e) = done {
             eprintln!("PhotoStar update helper failed: {e}");
             std::process::exit(1);

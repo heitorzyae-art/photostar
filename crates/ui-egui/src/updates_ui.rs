@@ -5,6 +5,11 @@ use serde_json::Value;
 
 use crate::PhotostarApp;
 
+/// This app as `craft-update` knows it. Releases are checked, and updates only ever downloaded, from
+/// this repository: not from the upstream project's, so PhotoStar never replaces itself with PhotoCraft.
+#[cfg(not(target_arch = "wasm32"))]
+pub const APP: craft_update::App = craft_update::App::new("photostar", "PhotoStar", "Image editing", "heitorzyae-art/photostar");
+
 pub(crate) struct Runtime {
     startup_checked: bool,
     notified_version: Option<String>,
@@ -19,7 +24,7 @@ impl Default for Runtime {
             startup_checked: false,
             notified_version: None,
             #[cfg(not(target_arch = "wasm32"))]
-            updater: craft_update::updater::Updater::new(&craft_update::suite::PHOTOSTAR, photostar_engine::build_info::VERSION),
+            updater: craft_update::updater::Updater::new(&APP, photostar_engine::build_info::VERSION),
         }
     }
 }
