@@ -1,0 +1,52 @@
+name: Build Windows exe
+
+# Builds PhotoStar for 64-bit Windows and uploads PhotoStar.exe as a downloadable artifact:
+# GitHub > Actions > this run > Artifacts. Run it by pushing, or by hand with "Run workflow".
+# The workflows of the upstream project are parked in .github/workflows-disabled/.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, photostar-rename]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    timeout-minutes: 150
+    env:
+      # Fail the build if the icon/version resources cannot be embedded in the exe.
+      PHOTOSTAR_REQUIRE_WINRES: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the stable Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustc --version
+          cargo --version
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        shell: pwsh
+        run: cargo build --release -p photostar
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item target/release/photostar.exe dist/PhotoStar.exe
+          Copy-Item LICENSE-MIT, LICENSE-APACHE, NOTICE dist/
+          Get-FileHash dist/PhotoStar.exe -Algorithm SHA256 | Format-List
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhotoStar-windows-x64
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
