@@ -1,4 +1,4 @@
-//! Project links: the Help menu, the About dialog and the start screen open these.
+//! Project links: the Help menu opens these.
 
 use serde_json::{Value, json};
 
@@ -24,33 +24,6 @@ pub fn open(app: &mut PhotostarApp, ctx: &egui::Context, url: &str) -> Value {
     let template = "Opened {url}";
     app.ui.status = crate::i18n::fmt(tl!(template), &[("url", url)]);
     json!({"url": url})
-}
-
-/// The project links ("GitHub"), centred. Clicks route through [`open`] (the
-/// platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
-pub fn link_row(app: &mut PhotostarApp, ui: &mut egui::Ui) {
-    let t = crate::theme::Tokens::get(ui.ctx());
-    let links = [(tl!("GitHub"), GITHUB)];
-    let font = egui::FontId::proportional(12.5);
-    let sep = "  ·  ";
-    let width: f32 = links.iter().map(|(l, _)| ui.painter().layout_no_wrap((*l).into(), font.clone(), t.text).size().x).sum::<f32>()
-        + links.len().saturating_sub(1) as f32 * ui.painter().layout_no_wrap(sep.into(), font.clone(), t.text).size().x;
-    let mut clicked: Option<&str> = None;
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.add_space(((ui.available_width() - width) / 2.0).max(0.0));
-        for (i, (label, url)) in links.iter().enumerate() {
-            if i > 0 {
-                ui.label(egui::RichText::new(sep).font(font.clone()).color(t.text_faint));
-            }
-            if ui.link(egui::RichText::new(*label).font(font.clone()).color(t.accent)).on_hover_text(*url).clicked() {
-                clicked = Some(url);
-            }
-        }
-    });
-    if let Some(url) = clicked {
-        open(app, ui.ctx(), url);
-    }
 }
 
 #[cfg(test)]
