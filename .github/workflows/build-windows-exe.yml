@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-windows-exe
+  cancel-in-progress: true
+
 jobs:
   windows-exe:
     runs-on: windows-latest
@@ -34,7 +38,28 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: cargo build --release -p photostar
+        run: |
+          cargo build --release -p photostar --message-format short 2>&1 | Tee-Object -FilePath build.log
+          exit $LASTEXITCODE
+
+      - name: Report build errors as annotations
+        if: failure()
+        shell: pwsh
+        run: |
+          function Esc([string]$s) { $s.Replace('%','%25').Replace("`r",'%0D').Replace("`n",'%0A') }
+          if (Test-Path build.log) {
+            $lines = @(Get-Content build.log | ForEach-Object { if ($_.Length -gt 400) { $_.Substring(0,400) } else { $_ } })
+            $errs = @($lines | Where-Object { $_ -match '\berror(\[E\d+\])?\b' -or $_ -match 'LNK\d+' -or $_ -match 'could not' } | Select-Object -First 30)
+            for ($i = 0; $i -lt $errs.Count; $i += 6) {
+              $chunk = ($errs[$i..([Math]::Min($i + 5, $errs.Count - 1))]) -join "`n"
+              $n = [int]($i / 6) + 1
+              Write-Output "::error title=build-error-${n}::$(Esc $chunk)"
+            }
+            $tail = ($lines | Select-Object -Last 40) -join "`n"
+            Write-Output "::error title=build-log-tail::$(Esc $tail)"
+          } else {
+            Write-Output "::error title=no-build-log::build.log was not created"
+          }
 
       - name: Package
         shell: pwsh
@@ -43,6 +68,14 @@ jobs:
           Copy-Item target/release/photostar.exe dist/PhotoStar.exe
           Copy-Item LICENSE-MIT, LICENSE-APACHE, NOTICE dist/
           Get-FileHash dist/PhotoStar.exe -Algorithm SHA256 | Format-List
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - uses: actions/upload-artifact@v4
         with:
